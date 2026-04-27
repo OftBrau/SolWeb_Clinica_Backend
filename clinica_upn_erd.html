@@ -1,0 +1,161 @@
+
+<style>
+#erd svg { width: 100%; }
+</style>
+<div id="erd" style="padding: 0.5rem 0;"></div>
+<script type="module">
+import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+await document.fonts.ready;
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'base',
+  fontFamily: '"Anthropic Sans", sans-serif',
+  themeVariables: {
+    darkMode: dark,
+    fontSize: '12px',
+    fontFamily: '"Anthropic Sans", sans-serif',
+    lineColor: dark ? '#9c9a92' : '#73726c',
+    textColor: dark ? '#c2c0b6' : '#3d3d3a',
+    primaryColor: dark ? '#3C3489' : '#EEEDFE',
+    primaryTextColor: dark ? '#CECBF6' : '#26215C',
+    primaryBorderColor: dark ? '#534AB7' : '#7F77DD',
+    secondaryColor: dark ? '#085041' : '#E1F5EE',
+    tertiaryColor: dark ? '#444441' : '#F1EFE8',
+  },
+});
+const diagram = `erDiagram
+  usuarios {
+    INT id_usuario PK
+    VARCHAR nombre
+    VARCHAR apellido
+    VARCHAR email
+    VARCHAR password_hash
+    VARCHAR telefono
+    ENUM rol
+    ENUM estado
+    DATETIME fecha_creacion
+  }
+  pacientes {
+    INT id_paciente PK
+    INT id_usuario FK
+    VARCHAR codigo_estudiante
+    DATE fecha_nacimiento
+    ENUM genero
+    VARCHAR tipo_sangre
+    TEXT alergias
+  }
+  doctores {
+    INT id_doctor PK
+    INT id_usuario FK
+    VARCHAR especialidad
+    VARCHAR CMP
+    INT id_consultorio FK
+  }
+  practicantes {
+    INT id_practicante PK
+    INT id_usuario FK
+    INT ciclo
+    INT id_supervisor FK
+    DECIMAL nota_promedio
+  }
+  citas {
+    INT id_cita PK
+    INT id_paciente FK
+    INT id_doctor FK
+    INT id_consultorio FK
+    DATE fecha
+    TIME hora
+    ENUM estado
+    ENUM tipo
+    TEXT motivo
+  }
+  historias_clinicas {
+    INT id_historia PK
+    INT id_paciente FK
+    DATETIME fecha_creacion
+    DATETIME ultima_actualizacion
+  }
+  consultas {
+    INT id_consulta PK
+    INT id_historia FK
+    INT id_doctor FK
+    DATETIME fecha
+    TEXT anamnesis
+    VARCHAR diagnostico_cie10
+    TEXT tratamiento
+    TEXT prescripcion
+  }
+  consultorios {
+    INT id_consultorio PK
+    VARCHAR numero
+    VARCHAR especialidad
+    INT piso
+    ENUM estado
+  }
+  teleconsultas {
+    INT id_teleconsulta PK
+    INT id_cita FK
+    VARCHAR url_sesion
+    INT duracion
+    ENUM estado
+    DATETIME fecha_inicio
+  }
+  evaluaciones_practicantes {
+    INT id_evaluacion PK
+    INT id_practicante FK
+    INT id_supervisor FK
+    DECIMAL nota
+    TEXT observaciones
+    DATETIME fecha
+  }
+  reportes {
+    INT id_reporte PK
+    VARCHAR tipo
+    DATETIME fecha_generacion
+    INT generado_por FK
+    ENUM formato
+    VARCHAR ruta_archivo
+  }
+  usuarios ||--o| pacientes : "es"
+  usuarios ||--o| doctores : "es"
+  usuarios ||--o| practicantes : "es"
+  pacientes ||--|| historias_clinicas : "tiene"
+  pacientes ||--o{ citas : "agenda"
+  doctores ||--o{ citas : "atiende"
+  consultorios ||--o{ citas : "asignado"
+  consultorios ||--o{ doctores : "ocupa"
+  historias_clinicas ||--o{ consultas : "contiene"
+  doctores ||--o{ consultas : "registra"
+  citas ||--o| teleconsultas : "genera"
+  doctores ||--o{ practicantes : "supervisa"
+  practicantes ||--o{ evaluaciones_practicantes : "recibe"
+  doctores ||--o{ evaluaciones_practicantes : "emite"
+  usuarios ||--o{ reportes : "genera"
+`;
+const { svg } = await mermaid.render('erd-svg', diagram);
+document.getElementById('erd').innerHTML = svg;
+
+document.querySelectorAll('#erd svg .node').forEach(node => {
+  const firstPath = node.querySelector('path[d]');
+  if (!firstPath) return;
+  const d = firstPath.getAttribute('d');
+  const nums = d.match(/-?[\d.]+/g)?.map(Number);
+  if (!nums || nums.length < 8) return;
+  const xs = [nums[0], nums[2], nums[4], nums[6]];
+  const ys = [nums[1], nums[3], nums[5], nums[7]];
+  const x = Math.min(...xs), y = Math.min(...ys);
+  const w = Math.max(...xs) - x, h = Math.max(...ys) - y;
+  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  rect.setAttribute('x', x); rect.setAttribute('y', y);
+  rect.setAttribute('width', w); rect.setAttribute('height', h);
+  rect.setAttribute('rx', '8');
+  for (const a of ['fill', 'stroke', 'stroke-width', 'class', 'style']) {
+    if (firstPath.hasAttribute(a)) rect.setAttribute(a, firstPath.getAttribute(a));
+  }
+  firstPath.replaceWith(rect);
+});
+document.querySelectorAll('#erd svg .row-rect-odd path, #erd svg .row-rect-even path').forEach(p => {
+  p.setAttribute('stroke', 'none');
+});
+</script>
