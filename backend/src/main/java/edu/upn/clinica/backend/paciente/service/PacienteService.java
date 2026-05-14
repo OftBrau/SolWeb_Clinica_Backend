@@ -27,8 +27,8 @@ public class PacienteService {
 
     // --- Listar con paginación ---
     public PageResult<PacienteDTO> listar(int page, int size) {
-        List<Paciente> lista  = pacienteRepository.findAll(page, size);
-        long           total  = pacienteRepository.count();
+        List<Paciente> lista = pacienteRepository.findAll(page, size);
+        long total = pacienteRepository.count();
         List<PacienteDTO> dtos = lista.stream().map(this::toDTO).toList();
         return new PageResult<>(dtos, total, page, size);
     }
@@ -37,8 +37,8 @@ public class PacienteService {
     public PacienteDTO buscarPorId(Integer id) {
         return pacienteRepository.findById(id)
                 .map(this::toDTO)
-                .orElseThrow(() ->
-                    new AppException("Paciente no encontrado", HttpStatus.NOT_FOUND));
+                .orElseThrow(()
+                        -> new AppException("Paciente no encontrado", HttpStatus.NOT_FOUND));
     }
 
     // --- Registrar nuevo paciente ---
@@ -56,18 +56,17 @@ public class PacienteService {
         return toDTO(guardado);
     }
 
-    // --- Actualizar paciente ---
     public PacienteDTO actualizar(Integer id, PacienteDTO dto) {
         Paciente existente = pacienteRepository.findById(id)
-                .orElseThrow(() ->
-                    new AppException("Paciente no encontrado", HttpStatus.NOT_FOUND));
+                .orElseThrow(()
+                        -> new AppException("Paciente no encontrado", HttpStatus.NOT_FOUND));
 
         existente.setNombre(dto.getNombre());
         existente.setApellido(dto.getApellido());
         existente.setTelefono(dto.getTelefono());
         existente.setCodigoEstudiante(dto.getCodigoEstudiante());
         existente.setFechaNacimiento(dto.getFechaNacimiento());
-        existente.setGenero(dto.getGenero());
+        existente.setGenero(mapGenero(dto.getGenero()));
         existente.setTipoSangre(dto.getTipoSangre());
         existente.setAlergias(dto.getAlergias());
 
@@ -75,11 +74,25 @@ public class PacienteService {
         return toDTO(existente);
     }
 
+    private String mapGenero(String genero) {
+        if (genero == null) {
+            return "OTRO";
+        }
+        return switch (genero.toUpperCase()) {
+            case "MASCULINO", "MALE", "M" ->
+                "M";
+            case "FEMENINO", "FEMALE", "F" ->
+                "F";
+            default ->
+                "OTRO";
+        };
+    }
+
     // --- Desactivar paciente (soft delete) ---
     public void desactivar(Integer id) {
         Paciente existente = pacienteRepository.findById(id)
-                .orElseThrow(() ->
-                    new AppException("Paciente no encontrado", HttpStatus.NOT_FOUND));
+                .orElseThrow(()
+                        -> new AppException("Paciente no encontrado", HttpStatus.NOT_FOUND));
         pacienteRepository.deactivate(existente.getIdUsuario());
     }
 

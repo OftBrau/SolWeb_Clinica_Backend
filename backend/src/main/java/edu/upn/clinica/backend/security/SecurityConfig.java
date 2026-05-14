@@ -35,31 +35,32 @@ public class SecurityConfig {
         http
                 // CORS — debe ir ANTES que csrf y session
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
                 // Sin CSRF (API REST stateless)
                 .csrf(AbstractHttpConfigurer::disable)
-
                 // Sin sesiones HTTP — cada request se autentica con JWT
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
+                .sessionManagement(session
+                        -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // Reglas de acceso por endpoint
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/auth/**",
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html"
-                        ).permitAll()
-                        .requestMatchers("/api/consultas/**")
-                                .hasAnyRole("DOCTOR", "PRACTICANTE")
-                        .requestMatchers("/api/reportes/**")
-                                .hasAnyRole("DIRECTOR", "ADMINISTRADOR")
-                        .requestMatchers("/api/admin/**")
-                                .hasRole("ADMINISTRADOR")
-                        .anyRequest().authenticated()
+                .requestMatchers(
+                        "/api/auth/**",
+                        "/v3/api-docs/**",
+                        "/api/cita-publica/**", 
+                        "/swagger-ui/**",
+                        "/swagger-ui.html"
+                        
+                ).permitAll()
+                .requestMatchers("/api/hce/**").hasRole("PACIENTE")
+                .requestMatchers("/api/citas/**").hasRole("PACIENTE")
+                .requestMatchers("/api/mis-citas/**").hasRole("PACIENTE")
+                .requestMatchers("/api/consultas/**")
+                .hasAnyRole("DOCTOR", "PRACTICANTE")
+                .requestMatchers("/api/reportes/**")
+                .hasAnyRole("DIRECTOR", "ADMINISTRADOR")
+                .requestMatchers("/api/admin/**")
+                .hasRole("ADMINISTRADOR")
+                .anyRequest().authenticated()
                 )
-
                 // Filtro JWT
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 

@@ -16,26 +16,27 @@ import java.util.Optional;
 @Repository
 public class PacienteRepository extends BaseRepository {
 
-    private static final String SELECT_BASE =
-        "SELECT p.id_paciente, p.id_usuario, u.nombre, u.apellido, u.email, " +
-        "u.telefono, u.estado, p.codigo_estudiante, p.fecha_nacimiento, " +
-        "p.genero, p.tipo_sangre, p.alergias " +
-        "FROM pacientes p " +
-        "JOIN usuarios u ON p.id_usuario = u.id_usuario ";
+    private static final String SELECT_BASE
+            = "SELECT p.id_paciente, p.id_usuario, u.nombre, u.apellido, u.email, "
+            + "u.telefono, u.estado, p.codigo_estudiante, p.fecha_nacimiento, "
+            + "p.genero, p.tipo_sangre, p.alergias "
+            + "FROM pacientes p "
+            + "JOIN usuarios u ON p.id_usuario = u.id_usuario ";
 
     // --- Listar todos con paginación ---
     public List<Paciente> findAll(int page, int size) {
         String sql = SELECT_BASE + "ORDER BY p.id_paciente LIMIT ? OFFSET ?";
         List<Paciente> lista = new ArrayList<>();
 
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, size);
             ps.setInt(2, page * size);
 
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) lista.add(mapRow(rs));
+                while (rs.next()) {
+                    lista.add(mapRow(rs));
+                }
             }
         } catch (Exception e) {
             throw new RuntimeException("Error listando pacientes: " + e.getMessage());
@@ -46,9 +47,7 @@ public class PacienteRepository extends BaseRepository {
     // --- Contar total (para paginación) ---
     public long count() {
         String sql = "SELECT COUNT(*) FROM pacientes";
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             return rs.next() ? rs.getLong(1) : 0;
         } catch (Exception e) {
             throw new RuntimeException("Error contando pacientes: " + e.getMessage());
@@ -58,11 +57,12 @@ public class PacienteRepository extends BaseRepository {
     // --- Buscar por ID ---
     public Optional<Paciente> findById(Integer id) {
         String sql = SELECT_BASE + "WHERE p.id_paciente = ?";
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return Optional.of(mapRow(rs));
+                if (rs.next()) {
+                    return Optional.of(mapRow(rs));
+                }
             }
         } catch (Exception e) {
             throw new RuntimeException("Error buscando paciente: " + e.getMessage());
@@ -73,11 +73,12 @@ public class PacienteRepository extends BaseRepository {
     // --- Buscar por email ---
     public Optional<Paciente> findByEmail(String email) {
         String sql = SELECT_BASE + "WHERE u.email = ?";
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, email);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return Optional.of(mapRow(rs));
+                if (rs.next()) {
+                    return Optional.of(mapRow(rs));
+                }
             }
         } catch (Exception e) {
             throw new RuntimeException("Error buscando paciente por email: " + e.getMessage());
@@ -85,11 +86,29 @@ public class PacienteRepository extends BaseRepository {
         return Optional.empty();
     }
 
+    public Optional<Paciente> findByEmailAndCodigo(String email, String codigo) {
+        System.out.println(">>> email: [" + email + "]");
+        System.out.println(">>> codigo: [" + codigo + "]");
+        String sql = SELECT_BASE
+                + "WHERE u.email = ? AND p.codigo_estudiante = ? AND u.estado = 'ACTIVO'";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email);
+            ps.setString(2, codigo);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(mapRow(rs));
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error buscando paciente por email y código: " + e.getMessage());
+        }
+        return Optional.empty();
+    }
+
     // --- Verificar si email ya existe ---
     public boolean existsByEmail(String email) {
         String sql = "SELECT COUNT(*) FROM usuarios WHERE email = ?";
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, email);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() && rs.getInt(1) > 0;
@@ -101,11 +120,11 @@ public class PacienteRepository extends BaseRepository {
 
     // --- Guardar paciente (inserta en usuarios + pacientes + historias_clinicas) ---
     public Paciente save(Paciente p) {
-        String sqlUsuario  = "INSERT INTO usuarios (nombre, apellido, email, password_hash, telefono, rol, estado) " +
-                             "VALUES (?, ?, ?, ?, ?, 'PACIENTE', 'ACTIVO')";
-        String sqlPaciente = "INSERT INTO pacientes (id_usuario, codigo_estudiante, fecha_nacimiento, genero, tipo_sangre, alergias) " +
-                             "VALUES (?, ?, ?, ?, ?, ?)";
-        String sqlHce      = "INSERT INTO historias_clinicas (id_paciente) VALUES (?)";
+        String sqlUsuario = "INSERT INTO usuarios (nombre, apellido, email, password_hash, telefono, rol, estado) "
+                + "VALUES (?, ?, ?, ?, ?, 'PACIENTE', 'ACTIVO')";
+        String sqlPaciente = "INSERT INTO pacientes (id_usuario, codigo_estudiante, fecha_nacimiento, genero, tipo_sangre, alergias) "
+                + "VALUES (?, ?, ?, ?, ?, ?)";
+        String sqlHce = "INSERT INTO historias_clinicas (id_paciente) VALUES (?)";
 
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
@@ -157,8 +176,8 @@ public class PacienteRepository extends BaseRepository {
     // --- Actualizar paciente ---
     public void update(Paciente p) {
         String sqlU = "UPDATE usuarios SET nombre=?, apellido=?, telefono=? WHERE id_usuario=?";
-        String sqlP = "UPDATE pacientes SET codigo_estudiante=?, fecha_nacimiento=?, " +
-                      "genero=?, tipo_sangre=?, alergias=? WHERE id_paciente=?";
+        String sqlP = "UPDATE pacientes SET codigo_estudiante=?, fecha_nacimiento=?, "
+                + "genero=?, tipo_sangre=?, alergias=? WHERE id_paciente=?";
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
             try {
@@ -191,8 +210,7 @@ public class PacienteRepository extends BaseRepository {
     // --- Desactivar (soft delete) ---
     public void deactivate(Integer idUsuario) {
         String sql = "UPDATE usuarios SET estado='INACTIVO' WHERE id_usuario=?";
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, idUsuario);
             ps.executeUpdate();
         } catch (Exception e) {
