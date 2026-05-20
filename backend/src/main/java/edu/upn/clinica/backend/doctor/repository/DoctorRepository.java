@@ -73,6 +73,55 @@ public class DoctorRepository extends BaseRepository {
         return Optional.empty();
     }
 
+    // --- Listar todos los doctores activos ---
+    public List<DoctorDisponibleDTO> findAll() {
+        String sql =
+            "SELECT d.id_doctor, " +
+            "       CONCAT(u.nombre, ' ', u.apellido) AS nombre_completo, " +
+            "       d.especialidad " +
+            "FROM doctores d " +
+            "JOIN usuarios u ON d.id_usuario = u.id_usuario " +
+            "WHERE u.estado = 'ACTIVO' " +
+            "ORDER BY u.nombre";
+
+        List<DoctorDisponibleDTO> lista = new ArrayList<>();
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                lista.add(new DoctorDisponibleDTO(
+                    rs.getInt("id_doctor"),
+                    rs.getString("nombre_completo"),
+                    rs.getString("especialidad")
+                ));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error listando doctores: " + e.getMessage());
+        }
+        return lista;
+    }
+
+    // --- Buscar doctor por email del usuario asociado ---
+    public Optional<Integer> findIdByEmail(String email) {
+        String sql =
+            "SELECT d.id_doctor " +
+            "FROM doctores d " +
+            "JOIN usuarios u ON d.id_usuario = u.id_usuario " +
+            "WHERE u.email = ? AND u.estado = 'ACTIVO' " +
+            "LIMIT 1";
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.of(rs.getInt("id_doctor"));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error buscando doctor por email: " + e.getMessage());
+        }
+        return Optional.empty();
+    }
+
     // --- Buscar doctor por ID (para construir la respuesta) ---
     public Optional<DoctorDisponibleDTO> findById(Integer idDoctor) {
         String sql =

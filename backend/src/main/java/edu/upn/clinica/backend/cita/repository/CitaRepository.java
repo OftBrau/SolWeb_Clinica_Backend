@@ -59,6 +59,17 @@ public class CitaRepository extends BaseRepository {
         }
     }
 
+    // --- Confirmar cita ---
+    public void confirmar(Integer idCita) {
+        String sql = "UPDATE citas SET estado = 'CONFIRMADA' WHERE id_cita = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idCita);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            throw new RuntimeException("Error confirmando cita: " + e.getMessage());
+        }
+    }
+
     // --- Cancelar cita ---
     public void cancelar(Integer idCita) {
         String sql = "UPDATE citas SET estado = 'CANCELADA' WHERE id_cita = ?";
@@ -67,6 +78,17 @@ public class CitaRepository extends BaseRepository {
             ps.executeUpdate();
         } catch (Exception e) {
             throw new RuntimeException("Error cancelando cita: " + e.getMessage());
+        }
+    }
+
+    // --- Marcar cita como atendida ---
+    public void marcarAtendida(Integer idCita) {
+        String sql = "UPDATE citas SET estado = 'ATENDIDA' WHERE id_cita = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idCita);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            throw new RuntimeException("Error marcando cita como atendida: " + e.getMessage());
         }
     }
 
@@ -104,6 +126,43 @@ public class CitaRepository extends BaseRepository {
     public List<Cita> findByPaciente(Integer idPaciente) {
         String sql = SELECT_BASE + "WHERE id_paciente = ? ORDER BY fecha DESC, hora DESC";
         return query(sql, idPaciente);
+    }
+
+    // --- Listar citas por doctor y fecha (agenda) ---
+    public List<Cita> findByDoctorAndFecha(Integer idDoctor, LocalDate fecha) {
+        String sql = SELECT_BASE + "WHERE id_doctor = ? AND fecha = ? ORDER BY hora";
+        return query(sql, idDoctor, Date.valueOf(fecha));
+    }
+
+    // --- Listar citas por estado (para administrativo) ---
+    public List<Cita> findAllByEstado(String estado, int page, int size) {
+        String sql = SELECT_BASE + "WHERE estado = ? ORDER BY fecha DESC, hora DESC LIMIT ? OFFSET ?";
+        return query(sql, estado, size, page * size);
+    }
+
+    // --- Contar citas por estado ---
+    public long countByEstado(String estado) {
+        String sql = "SELECT COUNT(*) FROM citas WHERE estado = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, estado);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getLong(1) : 0;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error contando citas por estado: " + e.getMessage());
+        }
+    }
+
+    // --- Listar todas las citas de una fecha (para admin/director) ---
+    public List<Cita> findAllByFecha(LocalDate fecha) {
+        String sql = SELECT_BASE + "WHERE fecha = ? ORDER BY id_doctor, hora";
+        return query(sql, Date.valueOf(fecha));
+    }
+
+    // --- Listar citas por fecha y estado ---
+    public List<Cita> findAllByFechaAndEstado(LocalDate fecha, String estado) {
+        String sql = SELECT_BASE + "WHERE fecha = ? AND estado = ? ORDER BY hora";
+        return query(sql, Date.valueOf(fecha), estado);
     }
 
     // --- Buscar por ID ---
