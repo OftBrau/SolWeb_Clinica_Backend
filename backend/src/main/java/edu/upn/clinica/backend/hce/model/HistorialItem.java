@@ -3,6 +3,7 @@ package edu.upn.clinica.backend.hce.model;
 import java.time.LocalDateTime;
 
 public class HistorialItem {
+    private Integer idConsulta;
     private Integer idPaciente;
     private String  nombrePaciente;
     private String  codigoEstudiante;
@@ -14,25 +15,38 @@ public class HistorialItem {
     private String  nombreDoctor;
     private String  especialidad;
 
-    // Getters y Setters
+    public HistorialItem() {}
+
+    public Integer getIdConsulta() { return idConsulta; }
+    public void setIdConsulta(Integer v) { this.idConsulta = v; }
+
     public Integer getIdPaciente() { return idPaciente; }
-    public void setIdPaciente(Integer idPaciente) { this.idPaciente = idPaciente; }
+    public void setIdPaciente(Integer v) { this.idPaciente = v; }
+
     public String getNombrePaciente() { return nombrePaciente; }
-    public void setNombrePaciente(String nombrePaciente) { this.nombrePaciente = nombrePaciente; }
+    public void setNombrePaciente(String v) { this.nombrePaciente = v; }
+
     public String getCodigoEstudiante() { return codigoEstudiante; }
-    public void setCodigoEstudiante(String codigoEstudiante) { this.codigoEstudiante = codigoEstudiante; }
+    public void setCodigoEstudiante(String v) { this.codigoEstudiante = v; }
+
     public LocalDateTime getFecha() { return fecha; }
-    public void setFecha(LocalDateTime fecha) { this.fecha = fecha; }
+    public void setFecha(LocalDateTime v) { this.fecha = v; }
+
     public String getDiagnosticoCie10() { return diagnosticoCie10; }
-    public void setDiagnosticoCie10(String diagnosticoCie10) { this.diagnosticoCie10 = diagnosticoCie10; }
+    public void setDiagnosticoCie10(String v) { this.diagnosticoCie10 = v; }
+
     public String getDescripcionDiag() { return descripcionDiag; }
-    public void setDescripcionDiag(String descripcionDiag) { this.descripcionDiag = descripcionDiag; }
+    public void setDescripcionDiag(String v) { this.descripcionDiag = v; }
+
     public String getTratamiento() { return tratamiento; }
-    public void setTratamiento(String tratamiento) { this.tratamiento = tratamiento; }
+    public void setTratamiento(String v) { this.tratamiento = v; }
+
     public String getPrescripcion() { return prescripcion; }
-    public void setPrescripcion(String prescripcion) { this.prescripcion = prescripcion; }
+    public void setPrescripcion(String v) { this.prescripcion = v; }
+
     public String getNombreDoctor() { return nombreDoctor; }
-    public void setNombreDoctor(String nombreDoctor) { this.nombreDoctor = nombreDoctor; }
+    public void setNombreDoctor(String v) { this.nombreDoctor = v; }
+
     public String getEspecialidad() { return especialidad; }
-    public void setEspecialidad(String especialidad) { this.especialidad = especialidad; }
+    public void setEspecialidad(String v) { this.especialidad = v; }
 }
