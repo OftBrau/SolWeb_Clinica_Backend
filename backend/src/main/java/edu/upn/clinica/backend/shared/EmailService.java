@@ -81,4 +81,40 @@ public class EmailService {
             System.err.println("Error al enviar confirmación a " + email + ": " + e.getMessage());
         }
     }
+
+    // ─── Enviar recordatorio de cita (CUS_13) ──────────────
+    @Async
+    public void enviarRecordatorioCita(String email, String nombrePaciente,
+                                       String nombreDoctor, String especialidad,
+                                       String fecha, String hora) {
+        try {
+            MimeMessage mensaje = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mensaje, true, "UTF-8");
+
+            helper.setFrom(remitente);
+            helper.setTo(email);
+            helper.setSubject("Recordatorio de Cita - Clínica UPN");
+
+            String cuerpo = """
+                    <html><body>
+                    <h2>Recordatorio de Cita</h2>
+                    <p>Hola, <strong>%s</strong>. Te recordamos que tienes una cita mañana.</p>
+                    <table border="1" cellpadding="8" cellspacing="0">
+                        <tr><td><strong>Médico</strong></td><td>%s</td></tr>
+                        <tr><td><strong>Especialidad</strong></td><td>%s</td></tr>
+                        <tr><td><strong>Fecha</strong></td><td>%s</td></tr>
+                        <tr><td><strong>Hora</strong></td><td>%s</td></tr>
+                    </table>
+                    <p>Por favor, confirma tu asistencia o reprograma si es necesario.</p>
+                    <br><p>Clínica UPN</p>
+                    </body></html>
+                    """.formatted(nombrePaciente, nombreDoctor, especialidad, fecha, hora);
+
+            helper.setText(cuerpo, true);
+            mailSender.send(mensaje);
+
+        } catch (Exception e) {
+            System.err.println("Error al enviar recordatorio a " + email + ": " + e.getMessage());
+        }
+    }
 }

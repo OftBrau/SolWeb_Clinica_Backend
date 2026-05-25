@@ -31,26 +31,26 @@
 |----|--------|-------|--------|
 | CUS_02 | Seleccionar especialidad y doctor | Paciente | ✅ |
 | CUS_05 | Reprogramar cita médica | Paciente | ✅ |
-| CUS_07 | Descargar documentos de la HCE | Paciente | ❌ |
+| CUS_07 | Descargar documentos de la HCE | Paciente | ✅ |
 | CUS_10 | Actualizar datos personales | Paciente | ✅ |
 | CUS_11 | Actualizar datos de contacto | Paciente | ✅ |
 | CUS_12 | Recibir notificación de cita | Paciente | ✅ |
-| CUS_13 | Recibir recordatorio de cita | Paciente | ❌ |
-| CUS_17 | Configurar disponibilidad horaria | Doctor | ❌ |
-| CUS_21 | Solicitar exámenes de laboratorio | Doctor | ❌ |
-| CUS_22 | Solicitar exámenes de imagen | Doctor | ❌ |
-| CUS_25 | Registrar consulta bajo supervisión | Practicante | ❌ |
-| CUS_26 | Enviar consulta a revisión del doctor | Practicante | ❌ |
-| CUS_27 | Buscar historia clínica de paciente asignado | Practicante | ❌ |
+| CUS_13 | Recibir recordatorio de cita | Paciente | ✅ |
+| CUS_17 | Configurar disponibilidad horaria | Doctor | ✅ |
+| CUS_21 | Solicitar exámenes de laboratorio | Doctor | ✅ |
+| CUS_22 | Solicitar exámenes de imagen | Doctor | ✅ |
+| CUS_25 | Registrar consulta bajo supervisión | Practicante | ✅ |
+| CUS_26 | Enviar consulta a revisión del doctor | Practicante | ✅ |
+| CUS_27 | Buscar historia clínica de paciente asignado | Practicante | ✅ |
 | CUS_35 | Cancelar cita por gestión administrativa | Administrativo | ✅ |
 | CUS_36 | Reprogramar cita (admin) | Administrativo | ✅ |
 | CUS_38 | Reasignar consultorio | Administrativo | ✅ |
-| CUS_39 | Generar reporte operativo diario | Administrativo | ❌ |
+| CUS_39 | Generar reporte operativo diario | Administrativo | ✅ |
 | CUS_42 | Editar usuario del sistema | Administrador | ✅ |
 | CUS_43 | Desactivar usuario del sistema | Administrador | ✅ |
-| CUS_49 | Consultar logs de actividad | Administrador | ❌ |
+| CUS_49 | Consultar logs de actividad | Administrador | ✅ |
 
-**P2 completados:** 6/20 — **Pendientes:** 14
+**P2 completados:** 20/20 ✅ **— 100% completado**
 
 ---
 
@@ -97,10 +97,10 @@
 | Prioridad | Total | ✅ Completado | ❌ Pendiente |
 |-----------|-------|:-------------:|:------------:|
 | P1 — Must Have | 16 | 16 | 0 |
-| P2 — Should Have | 20 | 10 | 10 |
+| P2 — Should Have | 20 | 20 | 0 |
 | P3 — Could Have | 16 | 0 | 16 |
 | P4 — Won't Have | 4 | 0 | 4 |
-| **Total** | **56** | **26** | **30** |
+| **Total** | **56** | **36** | **20** |
 
 ---
 
