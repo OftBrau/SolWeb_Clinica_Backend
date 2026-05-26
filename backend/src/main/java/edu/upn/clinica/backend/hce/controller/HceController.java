@@ -27,23 +27,28 @@ public class HceController {
     public ResponseEntity<ApiResponse<List<HistorialItem>>> listar() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR") || a.getAuthority().equals("ROLE_DIRECTOR"));
+        if (isAdmin) {
+            return ResponseEntity.ok(ApiResponse.ok("Historial",
+                    hceService.listarTodos()));
+        }
         return ResponseEntity.ok(ApiResponse.ok("Historial",
                 hceService.listarPorEmail(email)));
     }
 
     @GetMapping("/documentos/{id}/descargar")
-    @Operation(summary = "Descargar documento de la HCE (CUS_07)")
+    @Operation(summary = "Descargar documento de la HCE en PDF (CUS_07)")
     public ResponseEntity<byte[]> descargar(@PathVariable Integer id) {
-        String reporte = hceService.generarReporteTexto(id);
-        byte[] contenido = reporte.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        byte[] pdf = hceService.generarReportePDF(id);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.TEXT_PLAIN);
-        headers.setContentDispositionFormData("attachment", "hce_documento_" + id + ".txt");
-        headers.setContentLength(contenido.length);
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "hce_documento_" + id + ".pdf");
+        headers.setContentLength(pdf.length);
 
         return ResponseEntity.ok()
                 .headers(headers)
-                .body(contenido);
+                .body(pdf);
     }
 }

@@ -3,6 +3,7 @@ package edu.upn.clinica.backend.doctor.service;
 import edu.upn.clinica.backend.doctor.dto.DoctorDTO;
 import edu.upn.clinica.backend.doctor.dto.DisponibilidadDTO;
 import edu.upn.clinica.backend.doctor.repository.DisponibilidadRepository;
+import edu.upn.clinica.backend.doctor.repository.DoctorRepository;
 import edu.upn.clinica.backend.doctor.repository.DisponibilidadRepository.DisponibilidadRow;
 import edu.upn.clinica.backend.shared.AppException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,9 @@ public class DoctorService {
 
     @Autowired
     private DisponibilidadRepository disponibilidadRepository;
+
+    @Autowired
+    private DoctorRepository doctorRepository;
 
     public List<DisponibilidadDTO> listarDisponibilidad(Integer idDoctor) {
         return disponibilidadRepository.findByDoctor(idDoctor).stream()
@@ -51,6 +55,18 @@ public class DoctorService {
         disponibilidadRepository.findById(id)
                 .orElseThrow(() -> new AppException("Disponibilidad no encontrada", HttpStatus.NOT_FOUND));
         disponibilidadRepository.delete(id);
+    }
+
+    // ============ Admin ============
+
+    public List<DoctorDTO> listarTodos() {
+        return doctorRepository.findAllAdmin();
+    }
+
+    public void actualizarEspecialidad(Integer idDoctor, String especialidad) {
+        doctorRepository.findById(idDoctor)
+                .orElseThrow(() -> new AppException("Doctor no encontrado", HttpStatus.NOT_FOUND));
+        doctorRepository.updateEspecialidad(idDoctor, especialidad);
     }
 
     private DisponibilidadDTO toDisponibilidadDTO(DisponibilidadRow row) {

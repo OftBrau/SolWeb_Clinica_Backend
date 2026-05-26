@@ -15,6 +15,19 @@ public class PracticanteRepository extends BaseRepository {
 
     // ─── Actividades ──────────────────────────────────
 
+    public List<ActividadPracticante> findAllActividades() {
+        String sql = "SELECT * FROM actividades_practicante ORDER BY fecha DESC, hora DESC";
+        List<ActividadPracticante> lista = new ArrayList<>();
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapActividad(rs));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error consultando actividades: " + e.getMessage());
+        }
+        return lista;
+    }
+
     public List<ActividadPracticante> findActividadesByPracticante(Integer idPracticante) {
         String sql = "SELECT * FROM actividades_practicante WHERE id_practicante = ? ORDER BY fecha DESC, hora DESC";
         List<ActividadPracticante> lista = new ArrayList<>();

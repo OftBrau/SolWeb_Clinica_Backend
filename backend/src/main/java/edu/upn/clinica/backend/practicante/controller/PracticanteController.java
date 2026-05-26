@@ -11,7 +11,10 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,6 +32,14 @@ public class PracticanteController {
     @Operation(summary = "Listar actividades del practicante (CUS_30)")
     public ResponseEntity<ApiResponse<List<ActividadDTO>>> listarActividades(
             @RequestParam String email) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR") || a.getAuthority().equals("ROLE_DIRECTOR"));
+
+        if (isAdmin) {
+            return ResponseEntity.ok(ApiResponse.ok("Actividades obtenidas",
+                    practicanteService.listarTodasLasActividades()));
+        }
         return ResponseEntity.ok(ApiResponse.ok("Actividades obtenidas",
                 practicanteService.listarActividades(email)));
     }

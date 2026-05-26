@@ -50,9 +50,13 @@ public class SecurityConfig {
                         "/swagger-ui.html"
                         
                 ).permitAll()
-                .requestMatchers("/api/hce/**").hasRole("PACIENTE")
+                .requestMatchers("/api/admin/hce/**").hasRole("ADMINISTRADOR")
+                .requestMatchers("/api/hce/**")
+                .hasAnyRole("PACIENTE", "DOCTOR", "ADMINISTRADOR", "DIRECTOR")
                 .requestMatchers("/api/citas/**").hasRole("PACIENTE")
                 .requestMatchers("/api/mis-citas/**").hasRole("PACIENTE")
+                .requestMatchers("/api/teleconsulta/**")
+                .hasAnyRole("PACIENTE", "DOCTOR", "ADMINISTRADOR", "DIRECTOR")
                 .requestMatchers("/api/consultas/**")
                 .hasAnyRole("DOCTOR", "PRACTICANTE", "ADMINISTRADOR", "DIRECTOR")
                 .requestMatchers("/api/operaciones/**")

@@ -10,9 +10,59 @@ DROP TABLE IF EXISTS consultas;
 DROP TABLE IF EXISTS consultorios;
 DROP TABLE IF EXISTS doctor_consultorio;
 DROP TABLE IF EXISTS horarios_atencion;
+DROP TABLE IF EXISTS teleconsultas;
 DROP TABLE IF EXISTS especialidades;
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+CREATE TABLE IF NOT EXISTS usuarios (
+    id_usuario    INT             AUTO_INCREMENT PRIMARY KEY,
+    nombre        VARCHAR(255)    NOT NULL,
+    apellido      VARCHAR(255)    NOT NULL,
+    email         VARCHAR(255)    NOT NULL UNIQUE,
+    password_hash VARCHAR(255)    NOT NULL,
+    telefono      VARCHAR(50),
+    rol           VARCHAR(50)     NOT NULL,
+    estado        VARCHAR(20)     NOT NULL DEFAULT 'ACTIVO'
+);
+
+CREATE TABLE IF NOT EXISTS pacientes (
+    id_paciente       INT             AUTO_INCREMENT PRIMARY KEY,
+    id_usuario        INT             NOT NULL UNIQUE,
+    codigo_estudiante VARCHAR(50),
+    fecha_nacimiento  DATE,
+    genero            VARCHAR(20),
+    tipo_sangre       VARCHAR(10),
+    alergias          TEXT,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+);
+
+CREATE TABLE IF NOT EXISTS doctores (
+    id_doctor     INT             AUTO_INCREMENT PRIMARY KEY,
+    id_usuario    INT             NOT NULL UNIQUE,
+    especialidad  VARCHAR(100)    NOT NULL,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+);
+
+CREATE TABLE IF NOT EXISTS citas (
+    id_cita       INT             AUTO_INCREMENT PRIMARY KEY,
+    id_paciente   INT             NOT NULL,
+    id_doctor     INT             NOT NULL,
+    id_consultorio INT            NULL,
+    fecha         DATE            NOT NULL,
+    hora          TIME            NOT NULL,
+    estado        VARCHAR(30)     NOT NULL,
+    tipo          VARCHAR(30)     NOT NULL,
+    motivo        VARCHAR(500),
+    FOREIGN KEY (id_paciente) REFERENCES pacientes(id_paciente),
+    FOREIGN KEY (id_doctor)   REFERENCES doctores(id_doctor)
+);
+
+CREATE TABLE IF NOT EXISTS historias_clinicas (
+    id_historia   INT   AUTO_INCREMENT PRIMARY KEY,
+    id_paciente   INT   NOT NULL UNIQUE,
+    FOREIGN KEY (id_paciente) REFERENCES pacientes(id_paciente)
+);
 
 CREATE TABLE IF NOT EXISTS consultas (
     id_consulta INT AUTO_INCREMENT PRIMARY KEY,
@@ -112,6 +162,22 @@ CREATE TABLE IF NOT EXISTS evaluaciones_practicante (
     puntuacion DECIMAL(3,1) NOT NULL,
     comentario TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Teleconsultas
+CREATE TABLE IF NOT EXISTS teleconsultas (
+    id_teleconsulta INT AUTO_INCREMENT PRIMARY KEY,
+    id_paciente INT NOT NULL,
+    id_doctor INT,
+    especialidad VARCHAR(100) NOT NULL,
+    url_sesion VARCHAR(500),
+    fecha DATE NOT NULL,
+    hora TIME NOT NULL,
+    estado VARCHAR(30) NOT NULL DEFAULT 'PENDIENTE',
+    motivo TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_paciente) REFERENCES pacientes(id_paciente),
+    FOREIGN KEY (id_doctor) REFERENCES doctores(id_doctor)
 );
 
 -- Logs de actividad (CUS_49)

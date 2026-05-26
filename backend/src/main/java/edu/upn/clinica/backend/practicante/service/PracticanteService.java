@@ -42,6 +42,11 @@ public class PracticanteService {
                 .stream().map(this::toActividadDTO).toList();
     }
 
+    public List<ActividadDTO> listarTodasLasActividades() {
+        return practicanteRepository.findAllActividades()
+                .stream().map(this::toActividadDTO).toList();
+    }
+
     public ActividadDTO obtenerActividad(Integer id, String email) {
         Integer idPracticante = practicanteRepository.findIdByEmail(email)
                 .orElseThrow(() -> new AppException("Practicante no encontrado", HttpStatus.NOT_FOUND));
