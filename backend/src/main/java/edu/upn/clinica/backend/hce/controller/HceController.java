@@ -27,11 +27,18 @@ public class HceController {
     public ResponseEntity<ApiResponse<List<HistorialItem>>> listar() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
-        boolean isAdmin = auth.getAuthorities().stream()
+        var authorities = auth.getAuthorities();
+        boolean isAdmin = authorities.stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR") || a.getAuthority().equals("ROLE_DIRECTOR"));
+        boolean isDoctor = authorities.stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_DOCTOR"));
         if (isAdmin) {
             return ResponseEntity.ok(ApiResponse.ok("Historial",
                     hceService.listarTodos()));
+        }
+        if (isDoctor) {
+            return ResponseEntity.ok(ApiResponse.ok("Historial",
+                    hceService.listarPorDoctorEmail(email)));
         }
         return ResponseEntity.ok(ApiResponse.ok("Historial",
                 hceService.listarPorEmail(email)));

@@ -19,7 +19,7 @@ public class UsuarioRepository extends BaseRepository {
 
     private static final String SELECT_COLUMNS =
             "SELECT id_usuario, nombre, apellido, email, " +
-            "password_hash, telefono, rol, estado ";
+            "password_hash, telefono, rol, estado, password_default ";
 
     private static final String FROM_TABLE = "FROM usuarios";
 
@@ -109,8 +109,8 @@ public class UsuarioRepository extends BaseRepository {
 
     // --- Insertar nuevo usuario ---
     public Usuario save(Usuario usuario) {
-        String sql = "INSERT INTO usuarios (nombre, apellido, email, password_hash, telefono, rol, estado) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO usuarios (nombre, apellido, email, password_hash, telefono, rol, estado, password_default) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
@@ -122,6 +122,7 @@ public class UsuarioRepository extends BaseRepository {
             ps.setString(5, usuario.getTelefono());
             ps.setString(6, usuario.getRol());
             ps.setString(7, usuario.getEstado());
+            ps.setBoolean(8, usuario.isPasswordDefault());
             ps.executeUpdate();
 
             try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -170,6 +171,34 @@ public class UsuarioRepository extends BaseRepository {
             throw e;
         } catch (Exception e) {
             throw new RuntimeException("Error actualizando usuario: " + e.getMessage());
+        }
+    }
+
+    // --- Actualizar contraseña ---
+    public void updatePassword(Integer id, String passwordHash) {
+        String sql = "UPDATE usuarios SET password_hash = ?, password_default = 0 WHERE id_usuario = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, passwordHash);
+            ps.setInt(2, id);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            throw new RuntimeException("Error actualizando contraseña: " + e.getMessage());
+        }
+    }
+
+    // --- Actualizar datos personales ---
+    public void updatePerfil(Integer id, String nombre, String apellido, String telefono) {
+        String sql = "UPDATE usuarios SET nombre = ?, apellido = ?, telefono = ? WHERE id_usuario = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, nombre);
+            ps.setString(2, apellido);
+            ps.setString(3, telefono);
+            ps.setInt(4, id);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            throw new RuntimeException("Error actualizando perfil: " + e.getMessage());
         }
     }
 
@@ -226,6 +255,7 @@ public class UsuarioRepository extends BaseRepository {
         u.setTelefono(rs.getString("telefono"));
         u.setRol(rs.getString("rol"));
         u.setEstado(rs.getString("estado"));
+        u.setPasswordDefault(rs.getBoolean("password_default"));
         return u;
     }
 }

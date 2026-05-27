@@ -14,12 +14,19 @@ public class CitaPublicaResponse {
     private String  hora;
     private String  estado;
     private String  tipo;
+    private String  linkSala;
 
     public CitaPublicaResponse() {}
 
     public CitaPublicaResponse(Integer idCita, String paciente, String doctor,
                                 String especialidad, String fecha, String hora,
                                 String estado, String tipo) {
+        this(idCita, paciente, doctor, especialidad, fecha, hora, estado, tipo, null);
+    }
+
+    public CitaPublicaResponse(Integer idCita, String paciente, String doctor,
+                                String especialidad, String fecha, String hora,
+                                String estado, String tipo, String linkSala) {
         this.idCita      = idCita;
         this.paciente    = paciente;
         this.doctor      = doctor;
@@ -28,6 +35,7 @@ public class CitaPublicaResponse {
         this.hora        = hora;
         this.estado      = estado;
         this.tipo        = tipo;
+        this.linkSala    = linkSala;
     }
 
     public Integer getIdCita()                            { return idCita; }
@@ -53,4 +61,7 @@ public class CitaPublicaResponse {
 
     public String  getTipo()                              { return tipo; }
     public void    setTipo(String tipo)                  { this.tipo = tipo; }
+
+    public String  getLinkSala()                          { return linkSala; }
+    public void    setLinkSala(String linkSala)          { this.linkSala = linkSala; }
 }

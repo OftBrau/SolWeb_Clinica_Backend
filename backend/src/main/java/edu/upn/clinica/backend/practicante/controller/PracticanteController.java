@@ -1,5 +1,6 @@
 package edu.upn.clinica.backend.practicante.controller;
 
+import edu.upn.clinica.backend.hce.model.HistorialItem;
 import edu.upn.clinica.backend.practicante.dto.ActividadDTO;
 import edu.upn.clinica.backend.practicante.dto.ConsultaPracDTO;
 import edu.upn.clinica.backend.practicante.dto.EvaluacionDTO;
@@ -21,7 +22,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/practicante")
-@Tag(name = "Practicante", description = "Operaciones del módulo practicante (CUS_25/26/27)")
+@Tag(name = "Practicante", description = "Operaciones del módulo practicante (CUS_25/26/27/28/29/30/31)")
 @SecurityRequirement(name = "bearerAuth")
 public class PracticanteController {
 
@@ -83,5 +84,13 @@ public class PracticanteController {
             @RequestParam String email, @RequestParam String q) {
         return ResponseEntity.ok(ApiResponse.ok("Pacientes encontrados",
                 practicanteService.buscarPacientesAsignados(email, q)));
+    }
+
+    @GetMapping("/hce/{idPaciente}")
+    @Operation(summary = "Consultar detalle de historia clínica de paciente asignado (CUS_28)")
+    public ResponseEntity<ApiResponse<List<HistorialItem>>> verHistoriaClinica(
+            @PathVariable Integer idPaciente, @RequestParam String email) {
+        return ResponseEntity.ok(ApiResponse.ok("Historia clínica obtenida",
+                practicanteService.verHistoriaClinica(idPaciente, email)));
     }
 }

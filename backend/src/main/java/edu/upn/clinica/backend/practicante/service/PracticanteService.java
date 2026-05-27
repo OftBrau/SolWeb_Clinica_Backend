@@ -2,6 +2,8 @@ package edu.upn.clinica.backend.practicante.service;
 
 import edu.upn.clinica.backend.consulta.repository.ConsultaRepository;
 import edu.upn.clinica.backend.doctor.repository.DoctorRepository;
+import edu.upn.clinica.backend.hce.model.HistorialItem;
+import edu.upn.clinica.backend.hce.repository.HceRepository;
 import edu.upn.clinica.backend.paciente.repository.PacienteRepository;
 import edu.upn.clinica.backend.practicante.dto.ActividadDTO;
 import edu.upn.clinica.backend.practicante.dto.ConsultaPracDTO;
@@ -34,6 +36,9 @@ public class PracticanteService {
     @Autowired
     private ConsultaRepository consultaRepository;
 
+    @Autowired
+    private HceRepository hceRepository;
+
     public List<ActividadDTO> listarActividades(String email) {
         Integer idPracticante = practicanteRepository.findIdByEmail(email)
                 .orElseThrow(() -> new AppException("Practicante no encontrado", HttpStatus.NOT_FOUND));
@@ -65,9 +70,11 @@ public class PracticanteService {
                 .orElseThrow(() -> new AppException("Practicante no encontrado", HttpStatus.NOT_FOUND));
 
         edu.upn.clinica.backend.consulta.model.Consulta c = new edu.upn.clinica.backend.consulta.model.Consulta();
-        c.setIdCita(0);
+        c.setIdCita(dto.getIdCita() != null ? dto.getIdCita() : 0);
         c.setIdPaciente(dto.getIdPaciente());
         c.setIdDoctor(idPracticante);
+        c.setIdPracticante(idPracticante);
+        c.setEstadoRevision("BORRADOR");
         c.setDiagnosticoCie10(dto.getDiagnostico());
         c.setDescripcionDiagnostico(dto.getMotivo());
         c.setTratamiento(dto.getReceta());
@@ -75,12 +82,13 @@ public class PracticanteService {
 
         ConsultaPracDTO res = new ConsultaPracDTO();
         res.setIdConsulta(c.getIdConsulta());
+        res.setIdCita(c.getIdCita());
         res.setIdPaciente(c.getIdPaciente());
         res.setPaciente(dto.getPaciente());
         res.setMotivo(c.getDescripcionDiagnostico());
         res.setDiagnostico(c.getDiagnosticoCie10());
         res.setReceta(c.getTratamiento());
-        res.setEstado("PENDIENTE_REVISION");
+        res.setEstado(c.getEstadoRevision());
         res.setFecha(c.getCreatedAt() != null ? c.getCreatedAt().toLocalDate().toString() : LocalDate.now().toString());
         return res;
     }
@@ -120,6 +128,16 @@ public class PracticanteService {
             dto.setUltimaConsulta((String) row[3]);
             return dto;
         }).toList();
+    }
+
+    public List<HistorialItem> verHistoriaClinica(Integer idPaciente, String email) {
+        Integer idPracticante = practicanteRepository.findIdByEmail(email)
+                .orElseThrow(() -> new AppException("Practicante no encontrado", HttpStatus.NOT_FOUND));
+
+        pacienteRepository.findById(idPaciente)
+                .orElseThrow(() -> new AppException("Paciente no encontrado", HttpStatus.NOT_FOUND));
+
+        return hceRepository.findByPaciente(idPaciente);
     }
 
     private ActividadDTO toActividadDTO(ActividadPracticante a) {

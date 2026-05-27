@@ -20,6 +20,10 @@ public class EspecialidadService {
         return especialidadRepository.findAll().stream().map(EspecialidadDTO::new).toList();
     }
 
+    public List<EspecialidadDTO> listarActivas() {
+        return especialidadRepository.findAllActivas().stream().map(EspecialidadDTO::new).toList();
+    }
+
     public EspecialidadDTO obtener(Integer id) {
         Especialidad e = especialidadRepository.findById(id)
                 .orElseThrow(() -> new AppException("Especialidad no encontrada", HttpStatus.NOT_FOUND));

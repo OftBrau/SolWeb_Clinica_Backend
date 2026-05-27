@@ -7,6 +7,7 @@ import java.time.LocalTime;
 public class Teleconsulta {
 
     private Integer idTeleconsulta;
+    private Integer idCita;
     private Integer idPaciente;
     private Integer idDoctor;
     private String especialidad;
@@ -21,6 +22,9 @@ public class Teleconsulta {
 
     public Integer getIdTeleconsulta() { return idTeleconsulta; }
     public void setIdTeleconsulta(Integer v) { this.idTeleconsulta = v; }
+
+    public Integer getIdCita() { return idCita; }
+    public void setIdCita(Integer v) { this.idCita = v; }
 
     public Integer getIdPaciente() { return idPaciente; }
     public void setIdPaciente(Integer v) { this.idPaciente = v; }

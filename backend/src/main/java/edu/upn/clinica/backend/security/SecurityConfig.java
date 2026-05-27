@@ -47,8 +47,8 @@ public class SecurityConfig {
                         "/v3/api-docs/**",
                         "/api/cita-publica/**", 
                         "/swagger-ui/**",
-                        "/swagger-ui.html"
-                        
+                        "/swagger-ui.html",
+                        "/ws/**"
                 ).permitAll()
                 .requestMatchers("/api/admin/hce/**").hasRole("ADMINISTRADOR")
                 .requestMatchers("/api/hce/**")

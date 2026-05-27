@@ -12,6 +12,14 @@ public class EditarUsuarioRequest {
 
     private String telefono;
 
+    public EditarUsuarioRequest() {}
+
+    public EditarUsuarioRequest(String nombre, String apellido, String telefono) {
+        this.nombre = nombre;
+        this.apellido = apellido;
+        this.telefono = telefono;
+    }
+
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
 

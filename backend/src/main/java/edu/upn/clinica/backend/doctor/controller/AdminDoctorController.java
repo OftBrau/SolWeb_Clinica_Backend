@@ -1,5 +1,7 @@
 package edu.upn.clinica.backend.doctor.controller;
 
+import edu.upn.clinica.backend.doctor.dto.ActualizarDoctorRequest;
+import edu.upn.clinica.backend.doctor.dto.CrearDoctorRequest;
 import edu.upn.clinica.backend.doctor.dto.DoctorDTO;
 import edu.upn.clinica.backend.doctor.service.DoctorService;
 import edu.upn.clinica.backend.shared.ApiResponse;
@@ -28,6 +30,29 @@ public class AdminDoctorController {
     public ResponseEntity<ApiResponse<List<DoctorDTO>>> listar() {
         return ResponseEntity.ok(ApiResponse.ok("Doctores obtenidos",
                 doctorService.listarTodos()));
+    }
+
+    @PostMapping
+    @Operation(summary = "Crear nuevo doctor (CUS_45)")
+    public ResponseEntity<ApiResponse<Void>> crear(@Valid @RequestBody CrearDoctorRequest request) {
+        doctorService.registrar(request);
+        return ResponseEntity.ok(ApiResponse.ok("Doctor creado correctamente"));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Actualizar datos de un doctor (CUS_45)")
+    public ResponseEntity<ApiResponse<Void>> actualizar(
+            @PathVariable Integer id,
+            @Valid @RequestBody ActualizarDoctorRequest request) {
+        doctorService.actualizar(id, request);
+        return ResponseEntity.ok(ApiResponse.ok("Doctor actualizado correctamente"));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Eliminar (desactivar) un doctor (CUS_45)")
+    public ResponseEntity<ApiResponse<Void>> eliminar(@PathVariable Integer id) {
+        doctorService.eliminar(id);
+        return ResponseEntity.ok(ApiResponse.ok("Doctor desactivado correctamente"));
     }
 
     @PatchMapping("/{id}/especialidad")

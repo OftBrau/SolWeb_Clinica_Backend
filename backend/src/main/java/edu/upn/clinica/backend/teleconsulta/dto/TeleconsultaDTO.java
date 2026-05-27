@@ -3,6 +3,7 @@ package edu.upn.clinica.backend.teleconsulta.dto;
 public class TeleconsultaDTO {
 
     private Integer idTeleconsulta;
+    private Integer idCita;
     private String paciente;
     private String medico;
     private String especialidad;
@@ -14,10 +15,11 @@ public class TeleconsultaDTO {
 
     public TeleconsultaDTO() {}
 
-    public TeleconsultaDTO(Integer idTeleconsulta, String paciente, String medico,
+    public TeleconsultaDTO(Integer idTeleconsulta, Integer idCita, String paciente, String medico,
                            String especialidad, String fecha, String hora,
                            String estado, String linkSala, String motivo) {
         this.idTeleconsulta = idTeleconsulta;
+        this.idCita = idCita;
         this.paciente = paciente;
         this.medico = medico;
         this.especialidad = especialidad;
@@ -30,6 +32,9 @@ public class TeleconsultaDTO {
 
     public Integer getIdTeleconsulta() { return idTeleconsulta; }
     public void setIdTeleconsulta(Integer v) { this.idTeleconsulta = v; }
+
+    public Integer getIdCita() { return idCita; }
+    public void setIdCita(Integer v) { this.idCita = v; }
 
     public String getPaciente() { return paciente; }
     public void setPaciente(String v) { this.paciente = v; }

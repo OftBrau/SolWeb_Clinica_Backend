@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -16,7 +17,7 @@ public class ReporteService {
     private ReporteRepository reporteRepository;
 
     public ReporteDiarioDTO generarReporteDiario(String fecha) {
-        if (fecha == null || fecha.isEmpty()) fecha = LocalDate.now().toString();
+        if (fecha == null || fecha.isEmpty()) fecha = LocalDate.now(ZoneId.of("America/Lima")).toString();
 
         ReporteDiarioDTO dto = new ReporteDiarioDTO();
         dto.setFecha(fecha);

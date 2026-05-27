@@ -49,7 +49,20 @@ public class AuthService {
                 token,
                 usuario.getRol(),
                 usuario.getNombre() + " " + usuario.getApellido(),
-                usuario.getEmail()
+                usuario.getEmail(),
+                usuario.isPasswordDefault()
         );
+    }
+
+    public void cambiarPassword(String email, CambiarPasswordRequest request) {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException("Usuario no encontrado", HttpStatus.NOT_FOUND));
+
+        if (!passwordEncoder.matches(request.getPasswordActual(), usuario.getPasswordHash())) {
+            throw new AppException("La contraseña actual no es correcta", HttpStatus.BAD_REQUEST);
+        }
+
+        String hash = passwordEncoder.encode(request.getPasswordNueva());
+        usuarioRepository.updatePassword(usuario.getId(), hash);
     }
 }

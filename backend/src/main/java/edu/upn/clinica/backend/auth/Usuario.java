@@ -14,6 +14,7 @@ public class Usuario {
     private String  telefono;
     private String  rol;
     private String  estado;
+    private boolean passwordDefault = true;
 
     public Usuario() {}
 
@@ -41,4 +42,7 @@ public class Usuario {
 
     public String getEstado()              { return estado;              }
     public void   setEstado(String estado) { this.estado = estado;       }
+
+    public boolean isPasswordDefault()               { return passwordDefault; }
+    public void    setPasswordDefault(boolean v)     { this.passwordDefault = v; }
 }

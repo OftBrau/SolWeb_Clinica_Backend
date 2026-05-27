@@ -7,6 +7,8 @@ public class DoctorDTO {
     private String email;
     private String especialidad;
     private String telefono;
+    private String cmp;
+    private String fotoUrl;
     private String estado;
 
     public DoctorDTO() {}
@@ -28,6 +30,12 @@ public class DoctorDTO {
 
     public String getTelefono() { return telefono; }
     public void setTelefono(String v) { this.telefono = v; }
+
+    public String getCmp() { return cmp; }
+    public void setCmp(String v) { this.cmp = v; }
+
+    public String getFotoUrl() { return fotoUrl; }
+    public void setFotoUrl(String v) { this.fotoUrl = v; }
 
     public String getEstado() { return estado; }
     public void setEstado(String v) { this.estado = v; }

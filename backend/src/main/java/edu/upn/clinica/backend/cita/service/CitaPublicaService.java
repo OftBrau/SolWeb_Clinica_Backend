@@ -10,8 +10,12 @@ import edu.upn.clinica.backend.paciente.model.Paciente;
 import edu.upn.clinica.backend.paciente.repository.PacienteRepository;
 import edu.upn.clinica.backend.shared.AppException;
 import edu.upn.clinica.backend.shared.EmailService;
+import edu.upn.clinica.backend.teleconsulta.model.Teleconsulta;
+import edu.upn.clinica.backend.teleconsulta.notificacion.NotificacionDTO;
+import edu.upn.clinica.backend.teleconsulta.repository.TeleconsultaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +42,12 @@ public class CitaPublicaService {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private TeleconsultaRepository teleconsultaRepository;
+
+    @Autowired
+    private SimpMessagingTemplate messaging;
+
     // ─── 1. Buscar paciente existente ───────────────────────
     public Paciente buscarPaciente(String email, String codigoEstudiante) {
         return pacienteRepository
@@ -47,7 +57,12 @@ public class CitaPublicaService {
                 HttpStatus.NOT_FOUND));
     }
 
-    // ─── 2. Listar doctores por especialidad ─────────────────
+    // ─── 2. Listar todos los doctores activos ──────────────
+    public List<DoctorDisponibleDTO> listarTodosDoctores() {
+        return doctorRepository.findAll();
+    }
+
+    // ─── 3. Listar doctores por especialidad ─────────────────
     public List<DoctorDisponibleDTO> listarDoctoresPorEspecialidad(String especialidad) {
         List<DoctorDisponibleDTO> doctores = doctorRepository.findByEspecialidad(especialidad);
         if (doctores.isEmpty()) {
@@ -57,7 +72,7 @@ public class CitaPublicaService {
         return doctores;
     }
 
-    // ─── 3. Agendar cita ─────────────────────────────────────
+    // ─── 4. Agendar cita ─────────────────────────────────────
     public CitaPublicaResponse agendar(CitaPublicaRequest req) {
 
         boolean esPacienteNuevo = req.getIdPaciente() == null
@@ -107,6 +122,24 @@ public class CitaPublicaService {
                 .findById(idDoctor)
                 .orElse(new DoctorDisponibleDTO(idDoctor, req.getMedico(), req.getEspecialidad()));
 
+        String linkSala = null;
+        if ("TELECONSULTA".equals(guardada.getTipo())) {
+            String uuid = UUID.randomUUID().toString();
+            linkSala = "https://meet.jit.si/ClinicaUPN-" + uuid;
+
+            Teleconsulta tele = new Teleconsulta();
+            tele.setIdCita(guardada.getIdCita());
+            tele.setIdPaciente(idPaciente);
+            tele.setIdDoctor(idDoctor);
+            tele.setEspecialidad(req.getEspecialidad());
+            tele.setUrlSesion(linkSala);
+            tele.setFecha(fecha);
+            tele.setHora(hora);
+            tele.setEstado("PENDIENTE");
+            tele.setMotivo(req.getMotivo());
+            teleconsultaRepository.save(tele);
+        }
+
         String nombrePaciente = req.getNombre() != null
                 ? req.getNombre() + " " + req.getApellido()
                 : "Paciente #" + idPaciente;
@@ -124,10 +157,16 @@ public class CitaPublicaService {
                 fecha.toString(), hora.toString()
         );
 
+        System.out.println(">>> [WS] Notificando nueva cita a doctores: " + guardada.getIdCita());
+        messaging.convertAndSend("/topic/notificaciones/doctor",
+                new NotificacionDTO("NUEVA_CITA",
+                        "Nueva cita agendada: " + nombrePaciente + " con " + doctor.getNombre(),
+                        guardada.getIdCita()));
+
         return new CitaPublicaResponse(
                 guardada.getIdCita(), nombrePaciente, doctor.getNombre(),
                 doctor.getEspecialidad(), fecha.toString(), hora.toString(),
-                guardada.getEstado(), guardada.getTipo()
+                guardada.getEstado(), guardada.getTipo(), linkSala
         );
     }
 

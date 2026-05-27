@@ -6,6 +6,7 @@ import edu.upn.clinica.backend.cita.repository.CitaRepository;
 import edu.upn.clinica.backend.doctor.dto.DoctorDisponibleDTO;
 import edu.upn.clinica.backend.doctor.repository.DoctorRepository;
 import edu.upn.clinica.backend.paciente.repository.PacienteRepository;
+import edu.upn.clinica.backend.teleconsulta.repository.TeleconsultaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,9 +16,10 @@ import java.util.List;
 @Service
 public class AgendaService {
 
-    @Autowired private CitaRepository     citaRepository;
-    @Autowired private PacienteRepository pacienteRepository;
-    @Autowired private DoctorRepository   doctorRepository;
+    @Autowired private CitaRepository        citaRepository;
+    @Autowired private PacienteRepository    pacienteRepository;
+    @Autowired private DoctorRepository      doctorRepository;
+    @Autowired private TeleconsultaRepository teleconsultaRepository;
 
     public List<AgendaItemResponse> verAgenda(Integer idDoctor, LocalDate fecha) {
         return citaRepository.findByDoctorAndFecha(idDoctor, fecha)
@@ -51,6 +53,12 @@ public class AgendaService {
         r.setIdPaciente(c.getIdPaciente());
         r.setDoctor(doc.getNombre());
         r.setIdDoctor(c.getIdDoctor());
+
+        if ("TELECONSULTA".equals(c.getTipo())) {
+            teleconsultaRepository.findByCitaId(c.getIdCita())
+                    .ifPresent(t -> r.setLinkSala(t.getUrlSesion()));
+        }
+
         return r;
     }
 }

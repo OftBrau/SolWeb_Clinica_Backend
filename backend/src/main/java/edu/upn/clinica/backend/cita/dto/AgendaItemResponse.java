@@ -11,6 +11,7 @@ public class AgendaItemResponse {
     private Integer idPaciente;
     private String  doctor;
     private Integer idDoctor;
+    private String  linkSala;
 
     public AgendaItemResponse() {}
 
@@ -40,4 +41,7 @@ public class AgendaItemResponse {
 
     public Integer getIdDoctor()      { return idDoctor;   }
     public void   setIdDoctor(Integer v){ this.idDoctor = v;}
+
+    public String getLinkSala()       { return linkSala;   }
+    public void   setLinkSala(String v){ this.linkSala = v;}
 }

@@ -14,8 +14,11 @@ public class HceRepository extends BaseRepository {
 
     public List<HistorialItem> findAll() {
         String sql = "SELECT v.*, c.id_consulta FROM vista_historial_paciente v " +
-                     "LEFT JOIN citas ct ON ct.id_paciente = v.id_paciente AND ct.fecha = DATE(v.fecha) " +
-                     "LEFT JOIN consultas c ON c.id_cita = ct.id_cita " +
+                     "LEFT JOIN consultas c ON c.id_paciente = v.id_paciente " +
+                     "  AND COALESCE(c.diagnostico_cie10,'') = COALESCE(v.diagnostico_cie10,'') " +
+                     "  AND COALESCE(c.descripcion_diagnostico,'') = COALESCE(v.descripcion_diag,'') " +
+                     "  AND COALESCE(c.tratamiento,'') = COALESCE(v.tratamiento,'') " +
+                     "  AND COALESCE(c.prescripcion,'') = COALESCE(v.prescripcion,'') " +
                      "ORDER BY v.fecha DESC";
         List<HistorialItem> lista = new ArrayList<>();
         try (Connection conn = getConnection();
@@ -30,8 +33,11 @@ public class HceRepository extends BaseRepository {
 
     public List<HistorialItem> findByPaciente(Integer idPaciente) {
         String sql = "SELECT v.*, c.id_consulta FROM vista_historial_paciente v " +
-                     "LEFT JOIN citas ct ON ct.id_paciente = v.id_paciente AND ct.fecha = DATE(v.fecha) " +
-                     "LEFT JOIN consultas c ON c.id_cita = ct.id_cita " +
+                     "LEFT JOIN consultas c ON c.id_paciente = v.id_paciente " +
+                     "  AND COALESCE(c.diagnostico_cie10,'') = COALESCE(v.diagnostico_cie10,'') " +
+                     "  AND COALESCE(c.descripcion_diagnostico,'') = COALESCE(v.descripcion_diag,'') " +
+                     "  AND COALESCE(c.tratamiento,'') = COALESCE(v.tratamiento,'') " +
+                     "  AND COALESCE(c.prescripcion,'') = COALESCE(v.prescripcion,'') " +
                      "WHERE v.id_paciente = ? ORDER BY v.fecha DESC";
         List<HistorialItem> lista = new ArrayList<>();
         try (Connection conn = getConnection();
@@ -46,11 +52,35 @@ public class HceRepository extends BaseRepository {
         return lista;
     }
 
+    public List<HistorialItem> findByDoctorNombre(String nombreDoctor) {
+        String sql = "SELECT v.*, c.id_consulta FROM vista_historial_paciente v " +
+                     "LEFT JOIN consultas c ON c.id_paciente = v.id_paciente " +
+                     "  AND COALESCE(c.diagnostico_cie10,'') = COALESCE(v.diagnostico_cie10,'') " +
+                     "  AND COALESCE(c.descripcion_diagnostico,'') = COALESCE(v.descripcion_diag,'') " +
+                     "  AND COALESCE(c.tratamiento,'') = COALESCE(v.tratamiento,'') " +
+                     "  AND COALESCE(c.prescripcion,'') = COALESCE(v.prescripcion,'') " +
+                     "WHERE v.nombre_doctor = ? ORDER BY v.fecha DESC";
+        List<HistorialItem> lista = new ArrayList<>();
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, nombreDoctor);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapRow(rs));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error consultando historial por doctor: " + e.getMessage());
+        }
+        return lista;
+    }
+
     public Optional<HistorialItem> findByIdConsulta(Integer idConsulta) {
         String sql = "SELECT v.*, c.id_consulta FROM consultas c " +
                      "JOIN citas ct ON ct.id_cita = c.id_cita " +
                      "LEFT JOIN vista_historial_paciente v ON v.id_paciente = c.id_paciente " +
-                     "  AND v.fecha = ct.fecha " +
+                     "  AND COALESCE(v.diagnostico_cie10,'') = COALESCE(c.diagnostico_cie10,'') " +
+                     "  AND COALESCE(v.descripcion_diag,'') = COALESCE(c.descripcion_diagnostico,'') " +
+                     "  AND COALESCE(v.tratamiento,'') = COALESCE(c.tratamiento,'') " +
+                     "  AND COALESCE(v.prescripcion,'') = COALESCE(c.prescripcion,'') " +
                      "WHERE c.id_consulta = ?";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {

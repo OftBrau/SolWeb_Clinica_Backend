@@ -82,6 +82,47 @@ public class EmailService {
         }
     }
 
+    // ─── Enviar historial / receta al paciente ─────────────
+    @Async
+    public void enviarHistorialConsulta(String email, String nombrePaciente,
+                                        String nombreDoctor, String especialidad,
+                                        String diagnostico, String tratamiento,
+                                        String prescripcion, String fecha) {
+        try {
+            MimeMessage mensaje = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mensaje, true, "UTF-8");
+
+            helper.setFrom(remitente);
+            helper.setTo(email);
+            helper.setSubject("Resumen de tu consulta - Clínica UPN");
+
+            String cuerpo = """
+                    <html><body>
+                    <h2>Resumen de tu consulta médica</h2>
+                    <p>Hola, <strong>%s</strong>. Aquí tienes el resumen de tu atención.</p>
+                    <table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%%">
+                        <tr><td><strong>Médico</strong></td><td>%s</td></tr>
+                        <tr><td><strong>Especialidad</strong></td><td>%s</td></tr>
+                        <tr><td><strong>Fecha</strong></td><td>%s</td></tr>
+                        <tr><td><strong>Diagnóstico</strong></td><td>%s</td></tr>
+                        <tr><td><strong>Tratamiento</strong></td><td>%s</td></tr>
+                        <tr><td><strong>Prescripción / Receta</strong></td><td>%s</td></tr>
+                    </table>
+                    <br><p>Clínica UPN</p>
+                    </body></html>
+                    """.formatted(nombrePaciente, nombreDoctor, especialidad,
+                            fecha, diagnostico != null ? diagnostico : "—",
+                            tratamiento != null ? tratamiento : "—",
+                            prescripcion != null ? prescripcion : "—");
+
+            helper.setText(cuerpo, true);
+            mailSender.send(mensaje);
+
+        } catch (Exception e) {
+            System.err.println("Error al enviar historial a " + email + ": " + e.getMessage());
+        }
+    }
+
     // ─── Enviar recordatorio de cita (CUS_13) ──────────────
     @Async
     public void enviarRecordatorioCita(String email, String nombrePaciente,

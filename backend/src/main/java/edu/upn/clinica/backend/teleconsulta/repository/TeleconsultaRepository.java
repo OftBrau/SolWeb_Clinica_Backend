@@ -13,28 +13,33 @@ import java.util.Optional;
 public class TeleconsultaRepository extends BaseRepository {
 
     private static final String SELECT =
-        "SELECT id_teleconsulta, id_paciente, id_doctor, especialidad, " +
+        "SELECT id_teleconsulta, id_cita, id_paciente, id_doctor, especialidad, " +
         "url_sesion, fecha, hora, estado, motivo, created_at FROM teleconsultas";
 
     public Teleconsulta save(Teleconsulta t) {
-        String sql = "INSERT INTO teleconsultas (id_paciente, id_doctor, especialidad, " +
-                     "url_sesion, fecha, hora, estado, motivo) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO teleconsultas (id_cita, id_paciente, id_doctor, especialidad, " +
+                     "url_sesion, fecha, hora, estado, motivo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            ps.setInt(1, t.getIdPaciente());
-            if (t.getIdDoctor() != null) {
-                ps.setInt(2, t.getIdDoctor());
+            if (t.getIdCita() != null) {
+                ps.setInt(1, t.getIdCita());
             } else {
-                ps.setNull(2, Types.INTEGER);
+                ps.setNull(1, Types.INTEGER);
             }
-            ps.setString(3, t.getEspecialidad());
-            ps.setString(4, t.getUrlSesion());
-            ps.setDate(5, Date.valueOf(t.getFecha()));
-            ps.setTime(6, Time.valueOf(t.getHora()));
-            ps.setString(7, t.getEstado());
-            ps.setString(8, t.getMotivo());
+            ps.setInt(2, t.getIdPaciente());
+            if (t.getIdDoctor() != null) {
+                ps.setInt(3, t.getIdDoctor());
+            } else {
+                ps.setNull(3, Types.INTEGER);
+            }
+            ps.setString(4, t.getEspecialidad());
+            ps.setString(5, t.getUrlSesion());
+            ps.setDate(6, Date.valueOf(t.getFecha()));
+            ps.setTime(7, Time.valueOf(t.getHora()));
+            ps.setString(8, t.getEstado());
+            ps.setString(9, t.getMotivo());
             ps.executeUpdate();
 
             ResultSet rs = ps.getGeneratedKeys();
@@ -61,6 +66,11 @@ public class TeleconsultaRepository extends BaseRepository {
 
     public List<Teleconsulta> findAll() {
         return query(SELECT + " ORDER BY fecha DESC, hora DESC");
+    }
+
+    public Optional<Teleconsulta> findByCitaId(Integer idCita) {
+        List<Teleconsulta> list = query(SELECT + " WHERE id_cita = ?", idCita);
+        return list.isEmpty() ? Optional.empty() : Optional.of(list.getFirst());
     }
 
     public void actualizarEstado(Integer id, String estado) {
@@ -92,6 +102,8 @@ public class TeleconsultaRepository extends BaseRepository {
     private Teleconsulta mapRow(ResultSet rs) throws Exception {
         Teleconsulta t = new Teleconsulta();
         t.setIdTeleconsulta(rs.getInt("id_teleconsulta"));
+        int idc = rs.getInt("id_cita");
+        if (!rs.wasNull()) t.setIdCita(idc);
         t.setIdPaciente(rs.getInt("id_paciente"));
         int idDoc = rs.getInt("id_doctor");
         if (!rs.wasNull()) t.setIdDoctor(idDoc);

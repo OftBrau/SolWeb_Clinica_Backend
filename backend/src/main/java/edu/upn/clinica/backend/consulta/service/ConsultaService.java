@@ -8,10 +8,14 @@ import edu.upn.clinica.backend.consulta.model.Consulta;
 import edu.upn.clinica.backend.consulta.repository.ConsultaRepository;
 import edu.upn.clinica.backend.doctor.dto.DoctorDisponibleDTO;
 import edu.upn.clinica.backend.doctor.repository.DoctorRepository;
+import edu.upn.clinica.backend.paciente.model.Paciente;
 import edu.upn.clinica.backend.paciente.repository.PacienteRepository;
 import edu.upn.clinica.backend.shared.AppException;
+import edu.upn.clinica.backend.shared.EmailService;
+import edu.upn.clinica.backend.teleconsulta.notificacion.NotificacionDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,6 +27,8 @@ public class ConsultaService {
     @Autowired private CitaRepository      citaRepository;
     @Autowired private PacienteRepository  pacienteRepository;
     @Autowired private DoctorRepository    doctorRepository;
+    @Autowired private SimpMessagingTemplate messaging;
+    @Autowired private EmailService         emailService;
 
     public ConsultaResponseDTO iniciar(Integer idDoctor, ConsultaRequestDTO req) {
         Cita cita = citaRepository.findById(req.getIdCita())
@@ -48,6 +54,19 @@ public class ConsultaService {
         Consulta guardada = consultaRepository.save(c);
 
         citaRepository.marcarAtendida(req.getIdCita());
+
+        pacienteRepository.findById(cita.getIdPaciente())
+                .map(Paciente::getEmail)
+                .ifPresent(email -> {
+                    System.out.println(">>> [WS] Notificando cita atendida a paciente: " + email);
+                    messaging.convertAndSend("/topic/notificaciones/paciente/" + email,
+                            new NotificacionDTO("CITA_ATENDIDA",
+                                    "Tu cita ha sido atendida por " + doctorRepository
+                                            .findById(idDoctor)
+                                            .map(d -> d.getNombre())
+                                            .orElse("el doctor"),
+                                    req.getIdCita()));
+                });
 
         return toResponse(guardada);
     }
@@ -83,7 +102,26 @@ public class ConsultaService {
         Consulta c = validarAcceso(id, idDoctor);
         consultaRepository.updatePrescripcion(id, prescripcion);
         c.setPrescripcion(prescripcion);
-        return toResponse(c);
+        ConsultaResponseDTO dto = toResponse(c);
+
+        pacienteRepository.findById(c.getIdPaciente())
+                .ifPresent(pac -> {
+                    String docNombre = doctorRepository.findById(idDoctor)
+                            .map(d -> d.getNombre())
+                            .orElse("Doctor");
+                    System.out.println(">>> [EMAIL] Enviando historial a " + pac.getEmail());
+                    emailService.enviarHistorialConsulta(
+                            pac.getEmail(),
+                            pac.getNombre() + " " + pac.getApellido(),
+                            docNombre, "",
+                            dto.getDiagnosticoCie10() + " - " + dto.getDescripcionDiagnostico(),
+                            dto.getTratamiento(),
+                            dto.getPrescripcion(),
+                            c.getCreatedAt() != null ? c.getCreatedAt().toLocalDate().toString() : ""
+                    );
+                });
+
+        return dto;
     }
 
     public List<ConsultaResponseDTO> listarPorPaciente(Integer idPaciente, Integer idDoctor) {

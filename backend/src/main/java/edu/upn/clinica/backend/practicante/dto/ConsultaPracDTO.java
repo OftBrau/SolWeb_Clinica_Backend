@@ -2,6 +2,7 @@ package edu.upn.clinica.backend.practicante.dto;
 
 public class ConsultaPracDTO {
     private Integer idConsulta;
+    private Integer idCita;
     private Integer idPaciente;
     private String paciente;
     private String motivo;
@@ -15,6 +16,9 @@ public class ConsultaPracDTO {
 
     public Integer getIdConsulta() { return idConsulta; }
     public void setIdConsulta(Integer v) { this.idConsulta = v; }
+
+    public Integer getIdCita() { return idCita; }
+    public void setIdCita(Integer v) { this.idCita = v; }
 
     public Integer getIdPaciente() { return idPaciente; }
     public void setIdPaciente(Integer v) { this.idPaciente = v; }

@@ -10,6 +10,7 @@ public class DoctorDisponibleDTO {
     private Integer idDoctor;
     private String  nombre;       // nombre completo: "Dra. María Torres"
     private String  especialidad;
+    private String  fotoUrl;
 
     public DoctorDisponibleDTO() {}
 
@@ -17,6 +18,13 @@ public class DoctorDisponibleDTO {
         this.idDoctor     = idDoctor;
         this.nombre       = nombre;
         this.especialidad = especialidad;
+    }
+
+    public DoctorDisponibleDTO(Integer idDoctor, String nombre, String especialidad, String fotoUrl) {
+        this.idDoctor     = idDoctor;
+        this.nombre       = nombre;
+        this.especialidad = especialidad;
+        this.fotoUrl      = fotoUrl;
     }
 
     public Integer getIdDoctor()                            { return idDoctor; }
@@ -27,4 +35,7 @@ public class DoctorDisponibleDTO {
 
     public String  getEspecialidad()                        { return especialidad; }
     public void    setEspecialidad(String especialidad)    { this.especialidad = especialidad; }
+
+    public String  getFotoUrl()                             { return fotoUrl; }
+    public void    setFotoUrl(String fotoUrl)              { this.fotoUrl = fotoUrl; }
 }

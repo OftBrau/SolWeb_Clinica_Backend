@@ -16,14 +16,15 @@ DROP TABLE IF EXISTS especialidades;
 SET FOREIGN_KEY_CHECKS = 1;
 
 CREATE TABLE IF NOT EXISTS usuarios (
-    id_usuario    INT             AUTO_INCREMENT PRIMARY KEY,
-    nombre        VARCHAR(255)    NOT NULL,
-    apellido      VARCHAR(255)    NOT NULL,
-    email         VARCHAR(255)    NOT NULL UNIQUE,
-    password_hash VARCHAR(255)    NOT NULL,
-    telefono      VARCHAR(50),
-    rol           VARCHAR(50)     NOT NULL,
-    estado        VARCHAR(20)     NOT NULL DEFAULT 'ACTIVO'
+    id_usuario       INT             AUTO_INCREMENT PRIMARY KEY,
+    nombre           VARCHAR(255)    NOT NULL,
+    apellido         VARCHAR(255)    NOT NULL,
+    email            VARCHAR(255)    NOT NULL UNIQUE,
+    password_hash    VARCHAR(255)    NOT NULL,
+    telefono         VARCHAR(50),
+    rol              VARCHAR(50)     NOT NULL,
+    estado           VARCHAR(20)     NOT NULL DEFAULT 'ACTIVO',
+    password_default TINYINT(1)      NOT NULL DEFAULT 1
 );
 
 CREATE TABLE IF NOT EXISTS pacientes (
@@ -199,6 +200,46 @@ CREATE TABLE IF NOT EXISTS modulos_sistema (
     activo TINYINT(1) DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Migración: agregar id_cita a teleconsultas (solo si no existe)
+SET @db = (SELECT DATABASE());
+SET @exists = (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'teleconsultas' AND COLUMN_NAME = 'id_cita');
+SET @query = IF(@exists = 0, 'ALTER TABLE teleconsultas ADD COLUMN id_cita INT NULL AFTER id_teleconsulta', 'SELECT 1');
+PREPARE stmt FROM @query;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Insertar especialidades por defecto
+INSERT IGNORE INTO especialidades (nombre, descripcion, estado) VALUES
+('Medicina General', 'Atención médica integral', 'ACTIVO'),
+('Obstetricia', 'Atención del embarazo y parto', 'ACTIVO'),
+('Nutrición', 'Orientación alimenticia', 'ACTIVO'),
+('Psicología', 'Salud mental y emocional', 'ACTIVO'),
+('Rehabilitación', 'Terapia física y rehabilitación', 'ACTIVO'),
+('Fisioterapia', 'Terapia física', 'ACTIVO');
+
+-- Insertar doctores de prueba (password: clinica123)
+INSERT IGNORE INTO usuarios (nombre, apellido, email, password_hash, telefono, rol, estado, password_default) VALUES
+('Ricardo', 'Palma', 'rpalma@clinica.com', '$2b$12$kf0cUCIPyhYbiHPuYEVmvuA4hHlGIup1CuOhTQe3Vn0Zz1XhA4Vri', '999888001', 'DOCTOR', 'ACTIVO', 0),
+('Carmen', 'Lozano', 'clozano@clinica.com', '$2b$12$kf0cUCIPyhYbiHPuYEVmvuA4hHlGIup1CuOhTQe3Vn0Zz1XhA4Vri', '999888002', 'DOCTOR', 'ACTIVO', 0),
+('Andrea', 'Montes', 'amontes@clinica.com', '$2b$12$kf0cUCIPyhYbiHPuYEVmvuA4hHlGIup1CuOhTQe3Vn0Zz1XhA4Vri', '999888003', 'DOCTOR', 'ACTIVO', 0),
+('Ana', 'Quispe', 'aquispe@clinica.com', '$2b$12$kf0cUCIPyhYbiHPuYEVmvuA4hHlGIup1CuOhTQe3Vn0Zz1XhA4Vri', '999888004', 'DOCTOR', 'ACTIVO', 0),
+('Luis', 'Vega', 'lvega@clinica.com', '$2b$12$kf0cUCIPyhYbiHPuYEVmvuA4hHlGIup1CuOhTQe3Vn0Zz1XhA4Vri', '999888005', 'DOCTOR', 'ACTIVO', 0),
+('Carlos', 'Mendoza', 'cmendoza@clinica.com', '$2b$12$kf0cUCIPyhYbiHPuYEVmvuA4hHlGIup1CuOhTQe3Vn0Zz1XhA4Vri', '999888006', 'DOCTOR', 'ACTIVO', 0),
+('Pamela', 'Ríos', 'prios@clinica.com', '$2b$12$kf0cUCIPyhYbiHPuYEVmvuA4hHlGIup1CuOhTQe3Vn0Zz1XhA4Vri', '999888007', 'DOCTOR', 'ACTIVO', 0),
+('Marco', 'Silva', 'msilva@clinica.com', '$2b$12$kf0cUCIPyhYbiHPuYEVmvuA4hHlGIup1CuOhTQe3Vn0Zz1XhA4Vri', '999888008', 'DOCTOR', 'ACTIVO', 0),
+('Pedro', 'Castillo', 'pcastillo@clinica.com', '$2b$12$kf0cUCIPyhYbiHPuYEVmvuA4hHlGIup1CuOhTQe3Vn0Zz1XhA4Vri', '999888009', 'DOCTOR', 'ACTIVO', 0);
+
+INSERT IGNORE INTO doctores (id_usuario, especialidad) VALUES
+((SELECT id_usuario FROM usuarios WHERE email = 'rpalma@clinica.com'), 'Medicina General'),
+((SELECT id_usuario FROM usuarios WHERE email = 'clozano@clinica.com'), 'Medicina General'),
+((SELECT id_usuario FROM usuarios WHERE email = 'amontes@clinica.com'), 'Obstetricia'),
+((SELECT id_usuario FROM usuarios WHERE email = 'aquispe@clinica.com'), 'Nutrición'),
+((SELECT id_usuario FROM usuarios WHERE email = 'lvega@clinica.com'), 'Nutrición'),
+((SELECT id_usuario FROM usuarios WHERE email = 'cmendoza@clinica.com'), 'Psicología'),
+((SELECT id_usuario FROM usuarios WHERE email = 'prios@clinica.com'), 'Psicología'),
+((SELECT id_usuario FROM usuarios WHERE email = 'msilva@clinica.com'), 'Rehabilitación'),
+((SELECT id_usuario FROM usuarios WHERE email = 'pcastillo@clinica.com'), 'Fisioterapia');
 
 -- Insertar módulos por defecto
 INSERT IGNORE INTO modulos_sistema (nombre, descripcion) VALUES

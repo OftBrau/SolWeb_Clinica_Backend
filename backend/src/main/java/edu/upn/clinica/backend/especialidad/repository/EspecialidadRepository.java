@@ -25,6 +25,19 @@ public class EspecialidadRepository extends BaseRepository {
         return lista;
     }
 
+    public List<Especialidad> findAllActivas() {
+        String sql = "SELECT id_especialidad, nombre, descripcion, estado FROM especialidades WHERE estado = 'ACTIVO' ORDER BY nombre";
+        List<Especialidad> lista = new ArrayList<>();
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) lista.add(mapRow(rs));
+        } catch (Exception e) {
+            throw new RuntimeException("Error listando especialidades: " + e.getMessage());
+        }
+        return lista;
+    }
+
     public Optional<Especialidad> findById(Integer id) {
         String sql = "SELECT id_especialidad, nombre, descripcion, estado FROM especialidades WHERE id_especialidad = ?";
         try (Connection conn = getConnection();

@@ -77,6 +77,39 @@ public class TeleconsultaController {
                 teleconsultaService.obtenerPorId(id)));
     }
 
+    @GetMapping("/cita/{idCita}")
+    @Operation(summary = "Obtener teleconsulta asociada a una cita")
+    public ResponseEntity<ApiResponse<TeleconsultaDTO>> obtenerPorCita(@PathVariable Integer idCita) {
+        return ResponseEntity.ok(ApiResponse.ok("Teleconsulta encontrada",
+                teleconsultaService.buscarPorCita(idCita)));
+    }
+
+    @GetMapping("/doctor/pendientes")
+    @Operation(summary = "Listar teleconsultas pendientes del doctor autenticado")
+    public ResponseEntity<ApiResponse<List<TeleconsultaDTO>>> listarPendientes() {
+        Integer idDoc = getIdDoctor();
+        return ResponseEntity.ok(ApiResponse.ok("Teleconsultas pendientes",
+                teleconsultaService.listarPorDoctor(idDoc).stream()
+                    .filter(t -> "PENDIENTE".equals(t.getEstado()))
+                    .toList()));
+    }
+
+    @PutMapping("/{id}/aceptar")
+    @Operation(summary = "Aceptar teleconsulta (doctor)")
+    public ResponseEntity<ApiResponse<TeleconsultaDTO>> aceptar(@PathVariable Integer id) {
+        Integer idDoctor = getIdDoctor();
+        return ResponseEntity.ok(ApiResponse.ok("Teleconsulta aceptada",
+                teleconsultaService.aceptar(id, idDoctor)));
+    }
+
+    @PutMapping("/{id}/completar")
+    @Operation(summary = "Finalizar teleconsulta (doctor)")
+    public ResponseEntity<ApiResponse<TeleconsultaDTO>> completar(@PathVariable Integer id) {
+        Integer idDoctor = getIdDoctor();
+        return ResponseEntity.ok(ApiResponse.ok("Teleconsulta finalizada",
+                teleconsultaService.completar(id, idDoctor)));
+    }
+
     private Integer getIdPaciente() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
@@ -84,5 +117,13 @@ public class TeleconsultaController {
                 .map(p -> p.getIdPaciente())
                 .orElseThrow(() -> new AppException(
                         "Paciente no encontrado", HttpStatus.NOT_FOUND));
+    }
+
+    private Integer getIdDoctor() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        return doctorRepository.findIdByEmail(email)
+                .orElseThrow(() -> new AppException(
+                        "Doctor no encontrado", HttpStatus.NOT_FOUND));
     }
 }

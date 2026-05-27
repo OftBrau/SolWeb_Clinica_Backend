@@ -120,54 +120,30 @@ public class PacienteRepository extends BaseRepository {
 
     // --- Guardar paciente (inserta en usuarios + pacientes + historias_clinicas) ---
     public Paciente save(Paciente p) {
-        String sqlUsuario = "INSERT INTO usuarios (nombre, apellido, email, password_hash, telefono, rol, estado) "
-                + "VALUES (?, ?, ?, ?, ?, 'PACIENTE', 'ACTIVO')";
-        String sqlPaciente = "INSERT INTO pacientes (id_usuario, codigo_estudiante, fecha_nacimiento, genero, tipo_sangre, alergias) "
-                + "VALUES (?, ?, ?, ?, ?, ?)";
-        String sqlHce = "INSERT INTO historias_clinicas (id_paciente) VALUES (?)";
+        String sql = "{CALL usp_registrar_paciente(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
 
-        try (Connection conn = getConnection()) {
-            conn.setAutoCommit(false);
-            try {
-                // 1. Insertar en usuarios
-                PreparedStatement psU = conn.prepareStatement(sqlUsuario, Statement.RETURN_GENERATED_KEYS);
-                psU.setString(1, p.getNombre());
-                psU.setString(2, p.getApellido());
-                psU.setString(3, p.getEmail());
-                psU.setString(4, p.getPasswordHash());
-                psU.setString(5, p.getTelefono());
-                psU.executeUpdate();
+        try (Connection conn = getConnection();
+             CallableStatement cs = conn.prepareCall(sql)) {
 
-                ResultSet rsU = psU.getGeneratedKeys();
-                int idUsuario = rsU.next() ? rsU.getInt(1) : 0;
-                p.setIdUsuario(idUsuario);
+            cs.setString(1, p.getNombre());
+            cs.setString(2, p.getApellido());
+            cs.setString(3, p.getEmail());
+            cs.setString(4, p.getPasswordHash());
+            cs.setString(5, p.getTelefono());
+            cs.setString(6, p.getCodigoEstudiante());
+            cs.setDate(7, Date.valueOf(p.getFechaNacimiento()));
+            cs.setString(8, p.getGenero());
+            cs.setString(9, p.getTipoSangre());
+            cs.setString(10, p.getAlergias());
+            cs.registerOutParameter(11, Types.INTEGER);
+            cs.registerOutParameter(12, Types.INTEGER);
 
-                // 2. Insertar en pacientes
-                PreparedStatement psP = conn.prepareStatement(sqlPaciente, Statement.RETURN_GENERATED_KEYS);
-                psP.setInt(1, idUsuario);
-                psP.setString(2, p.getCodigoEstudiante());
-                psP.setDate(3, Date.valueOf(p.getFechaNacimiento()));
-                psP.setString(4, p.getGenero());
-                psP.setString(5, p.getTipoSangre());
-                psP.setString(6, p.getAlergias());
-                psP.executeUpdate();
+            cs.execute();
 
-                ResultSet rsP = psP.getGeneratedKeys();
-                int idPaciente = rsP.next() ? rsP.getInt(1) : 0;
-                p.setIdPaciente(idPaciente);
+            p.setIdUsuario(cs.getInt(11));
+            p.setIdPaciente(cs.getInt(12));
 
-                // 3. Crear HCE automáticamente
-                PreparedStatement psH = conn.prepareStatement(sqlHce);
-                psH.setInt(1, idPaciente);
-                psH.executeUpdate();
-
-                conn.commit();
-                return p;
-
-            } catch (Exception e) {
-                conn.rollback();
-                throw e;
-            }
+            return p;
         } catch (Exception e) {
             throw new RuntimeException("Error guardando paciente: " + e.getMessage());
         }
@@ -175,33 +151,22 @@ public class PacienteRepository extends BaseRepository {
 
     // --- Actualizar paciente ---
     public void update(Paciente p) {
-        String sqlU = "UPDATE usuarios SET nombre=?, apellido=?, telefono=? WHERE id_usuario=?";
-        String sqlP = "UPDATE pacientes SET codigo_estudiante=?, fecha_nacimiento=?, "
-                + "genero=?, tipo_sangre=?, alergias=? WHERE id_paciente=?";
-        try (Connection conn = getConnection()) {
-            conn.setAutoCommit(false);
-            try {
-                PreparedStatement psU = conn.prepareStatement(sqlU);
-                psU.setString(1, p.getNombre());
-                psU.setString(2, p.getApellido());
-                psU.setString(3, p.getTelefono());
-                psU.setInt(4, p.getIdUsuario());
-                psU.executeUpdate();
+        String sql = "{CALL usp_actualizar_paciente(?, ?, ?, ?, ?, ?, ?, ?, ?)}";
 
-                PreparedStatement psP = conn.prepareStatement(sqlP);
-                psP.setString(1, p.getCodigoEstudiante());
-                psP.setDate(2, Date.valueOf(p.getFechaNacimiento()));
-                psP.setString(3, p.getGenero());
-                psP.setString(4, p.getTipoSangre());
-                psP.setString(5, p.getAlergias());
-                psP.setInt(6, p.getIdPaciente());
-                psP.executeUpdate();
+        try (Connection conn = getConnection();
+             CallableStatement cs = conn.prepareCall(sql)) {
 
-                conn.commit();
-            } catch (Exception e) {
-                conn.rollback();
-                throw e;
-            }
+            cs.setInt(1, p.getIdPaciente());
+            cs.setString(2, p.getNombre());
+            cs.setString(3, p.getApellido());
+            cs.setString(4, p.getTelefono());
+            cs.setString(5, p.getCodigoEstudiante());
+            cs.setDate(6, Date.valueOf(p.getFechaNacimiento()));
+            cs.setString(7, p.getGenero());
+            cs.setString(8, p.getTipoSangre());
+            cs.setString(9, p.getAlergias());
+
+            cs.execute();
         } catch (Exception e) {
             throw new RuntimeException("Error actualizando paciente: " + e.getMessage());
         }

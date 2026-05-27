@@ -12,6 +12,8 @@ public class Consulta {
     private String  descripcionDiagnostico;
     private String  tratamiento;
     private String  prescripcion;
+    private Integer idPracticante;
+    private String  estadoRevision;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -40,6 +42,12 @@ public class Consulta {
 
     public String getPrescripcion()               { return prescripcion; }
     public void setPrescripcion(String v)         { this.prescripcion = v; }
+
+    public Integer getIdPracticante()             { return idPracticante; }
+    public void setIdPracticante(Integer v)      { this.idPracticante = v; }
+
+    public String getEstadoRevision()             { return estadoRevision; }
+    public void setEstadoRevision(String v)      { this.estadoRevision = v; }
 
     public LocalDateTime getCreatedAt()           { return createdAt; }
     public void setCreatedAt(LocalDateTime v)    { this.createdAt = v; }

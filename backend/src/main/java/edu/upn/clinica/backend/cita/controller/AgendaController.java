@@ -18,6 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 @RestController
@@ -35,7 +36,7 @@ public class AgendaController {
             @RequestParam(required = false) String fecha,
             @RequestParam(required = false) Integer idDoctor) {
 
-        LocalDate dia = (fecha != null) ? LocalDate.parse(fecha) : LocalDate.now();
+        LocalDate dia = (fecha != null) ? LocalDate.parse(fecha) : LocalDate.now(ZoneId.of("America/Lima"));
         boolean esAdmin = tieneRol("ADMINISTRADOR") || tieneRol("DIRECTOR");
 
         List<AgendaItemResponse> agenda;

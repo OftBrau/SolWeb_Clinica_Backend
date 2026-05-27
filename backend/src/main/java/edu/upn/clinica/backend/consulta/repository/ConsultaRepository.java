@@ -15,27 +15,31 @@ public class ConsultaRepository extends BaseRepository {
     private static final String SELECT =
         "SELECT id_consulta, id_cita, id_paciente, id_doctor, " +
         "diagnostico_cie10, descripcion_diagnostico, tratamiento, " +
-        "prescripcion, created_at, updated_at FROM consultas";
+        "prescripcion, id_practicante, estado_revision, created_at, updated_at FROM consultas";
 
     public Consulta save(Consulta c) {
-        String sql = "INSERT INTO consultas (id_cita, id_paciente, id_doctor, " +
-                     "diagnostico_cie10, descripcion_diagnostico, tratamiento, prescripcion) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "{CALL usp_iniciar_consulta(?, ?, ?, ?, ?, ?, ?, ?, ?)}";
 
         try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             CallableStatement cs = conn.prepareCall(sql)) {
 
-            ps.setInt(1, c.getIdCita());
-            ps.setInt(2, c.getIdPaciente());
-            ps.setInt(3, c.getIdDoctor());
-            ps.setString(4, c.getDiagnosticoCie10());
-            ps.setString(5, c.getDescripcionDiagnostico());
-            ps.setString(6, c.getTratamiento());
-            ps.setString(7, c.getPrescripcion());
-            ps.executeUpdate();
+            cs.setInt(1, c.getIdCita());
+            cs.setInt(2, c.getIdPaciente());
+            cs.setInt(3, c.getIdDoctor());
+            cs.setString(4, c.getDiagnosticoCie10());
+            cs.setString(5, c.getDescripcionDiagnostico());
+            cs.setString(6, c.getTratamiento());
+            cs.setString(7, c.getPrescripcion());
+            if (c.getIdPracticante() != null) {
+                cs.setInt(8, c.getIdPracticante());
+            } else {
+                cs.setNull(8, Types.INTEGER);
+            }
+            cs.registerOutParameter(9, Types.INTEGER);
 
-            ResultSet rs = ps.getGeneratedKeys();
-            if (rs.next()) c.setIdConsulta(rs.getInt(1));
+            cs.execute();
+
+            c.setIdConsulta(cs.getInt(9));
             return c;
         } catch (Exception e) {
             throw new RuntimeException("Error guardando consulta: " + e.getMessage());
@@ -117,6 +121,9 @@ public class ConsultaRepository extends BaseRepository {
         c.setDescripcionDiagnostico(rs.getString("descripcion_diagnostico"));
         c.setTratamiento(rs.getString("tratamiento"));
         c.setPrescripcion(rs.getString("prescripcion"));
+        int idp = rs.getInt("id_practicante");
+        if (!rs.wasNull()) c.setIdPracticante(idp);
+        c.setEstadoRevision(rs.getString("estado_revision"));
         Timestamp ca = rs.getTimestamp("created_at");
         if (ca != null) c.setCreatedAt(ca.toLocalDateTime());
         Timestamp ua = rs.getTimestamp("updated_at");
