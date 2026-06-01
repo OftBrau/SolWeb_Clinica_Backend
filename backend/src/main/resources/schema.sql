@@ -42,6 +42,8 @@ CREATE TABLE IF NOT EXISTS doctores (
     id_doctor     INT             AUTO_INCREMENT PRIMARY KEY,
     id_usuario    INT             NOT NULL UNIQUE,
     especialidad  VARCHAR(100)    NOT NULL,
+    descripcion   VARCHAR(300)    NULL,
+    bibliografia  TEXT            NULL,
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
 );
 
@@ -209,6 +211,19 @@ PREPARE stmt FROM @query;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
+-- Migración: agregar descripcion y bibliografia a doctores (solo si no existen)
+SET @exists_desc = (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'doctores' AND COLUMN_NAME = 'descripcion');
+SET @query_desc = IF(@exists_desc = 0, 'ALTER TABLE doctores ADD COLUMN descripcion VARCHAR(300) NULL AFTER especialidad', 'SELECT 1');
+PREPARE stmt FROM @query_desc;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @exists_bib = (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'doctores' AND COLUMN_NAME = 'bibliografia');
+SET @query_bib = IF(@exists_bib = 0, 'ALTER TABLE doctores ADD COLUMN bibliografia TEXT NULL AFTER descripcion', 'SELECT 1');
+PREPARE stmt FROM @query_bib;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
 -- Insertar especialidades por defecto
 INSERT IGNORE INTO especialidades (nombre, descripcion, estado) VALUES
 ('Medicina General', 'Atención médica integral', 'ACTIVO'),
@@ -230,16 +245,16 @@ INSERT IGNORE INTO usuarios (nombre, apellido, email, password_hash, telefono, r
 ('Marco', 'Silva', 'msilva@clinica.com', '$2b$12$kf0cUCIPyhYbiHPuYEVmvuA4hHlGIup1CuOhTQe3Vn0Zz1XhA4Vri', '999888008', 'DOCTOR', 'ACTIVO', 0),
 ('Pedro', 'Castillo', 'pcastillo@clinica.com', '$2b$12$kf0cUCIPyhYbiHPuYEVmvuA4hHlGIup1CuOhTQe3Vn0Zz1XhA4Vri', '999888009', 'DOCTOR', 'ACTIVO', 0);
 
-INSERT IGNORE INTO doctores (id_usuario, especialidad) VALUES
-((SELECT id_usuario FROM usuarios WHERE email = 'rpalma@clinica.com'), 'Medicina General'),
-((SELECT id_usuario FROM usuarios WHERE email = 'clozano@clinica.com'), 'Medicina General'),
-((SELECT id_usuario FROM usuarios WHERE email = 'amontes@clinica.com'), 'Obstetricia'),
-((SELECT id_usuario FROM usuarios WHERE email = 'aquispe@clinica.com'), 'Nutrición'),
-((SELECT id_usuario FROM usuarios WHERE email = 'lvega@clinica.com'), 'Nutrición'),
-((SELECT id_usuario FROM usuarios WHERE email = 'cmendoza@clinica.com'), 'Psicología'),
-((SELECT id_usuario FROM usuarios WHERE email = 'prios@clinica.com'), 'Psicología'),
-((SELECT id_usuario FROM usuarios WHERE email = 'msilva@clinica.com'), 'Rehabilitación'),
-((SELECT id_usuario FROM usuarios WHERE email = 'pcastillo@clinica.com'), 'Fisioterapia');
+INSERT IGNORE INTO doctores (id_usuario, especialidad, descripcion, bibliografia) VALUES
+((SELECT id_usuario FROM usuarios WHERE email = 'rpalma@clinica.com'), 'Medicina General', 'Médico general con amplia experiencia en atención primaria.', 'Egresado de la Universidad Nacional Mayor de San Marcos. Con 10 años de experiencia en el sector público y privado.'),
+((SELECT id_usuario FROM usuarios WHERE email = 'clozano@clinica.com'), 'Medicina General', 'Especialista en medicina familiar y preventiva.', 'Médica cirujana por la Universidad Peruana Cayetano Heredia. Diplomado en Salud Familiar.'),
+((SELECT id_usuario FROM usuarios WHERE email = 'amontes@clinica.com'), 'Obstetricia', 'Obstetra dedicada al cuidado integral de la mujer.', 'Licenciada en Obstetricia por la Universidad Nacional Mayor de San Marcos. Especialista en Alto Riesgo Obstétrico.'),
+((SELECT id_usuario FROM usuarios WHERE email = 'aquispe@clinica.com'), 'Nutrición', 'Nutricionista clínica especializada en planes personalizados.', 'Nutricionista por la Universidad Peruana de Ciencias Aplicadas. Maestría en Nutrición Clínica.'),
+((SELECT id_usuario FROM usuarios WHERE email = 'lvega@clinica.com'), 'Nutrición', 'Nutricionista deportivo y clínico.', 'Egresado de la Universidad San Ignacio de Loyola. Certificación internacional en Nutrición Deportiva.'),
+((SELECT id_usuario FROM usuarios WHERE email = 'cmendoza@clinica.com'), 'Psicología', 'Psicólogo clínico con enfoque cognitivo-conductual.', 'Psicólogo por la Pontificia Universidad Católica del Perú. Maestría en Psicología Clínica.'),
+((SELECT id_usuario FROM usuarios WHERE email = 'prios@clinica.com'), 'Psicología', 'Psicóloga especializada en salud mental y bienestar emocional.', 'Psicóloga por la Universidad de Lima. Experiencia en terapia individual y grupal.'),
+((SELECT id_usuario FROM usuarios WHERE email = 'msilva@clinica.com'), 'Rehabilitación', 'Especialista en medicina física y rehabilitación.', 'Médico rehabilitador por la Universidad Nacional Mayor de San Marcos. Experiencia en rehabilitación neurológica.'),
+((SELECT id_usuario FROM usuarios WHERE email = 'pcastillo@clinica.com'), 'Fisioterapia', 'Fisioterapeuta especializado en terapia manual y deportiva.', 'Fisioterapeuta por la Universidad Peruana de Ciencias Aplicadas. Certificado en Terapia Manual Ortopédica.');
 
 -- Insertar módulos por defecto
 INSERT IGNORE INTO modulos_sistema (nombre, descripcion) VALUES

@@ -26,7 +26,9 @@ public class DoctorRepository extends BaseRepository {
             "SELECT d.id_doctor, " +
             "       CONCAT(u.nombre, ' ', u.apellido) AS nombre_completo, " +
             "       d.especialidad, " +
-            "       d.foto_url " +
+            "       d.foto_url, " +
+            "       d.descripcion, " +
+            "       d.bibliografia " +
             "FROM doctores d " +
             "JOIN usuarios u ON d.id_usuario = u.id_usuario " +
             "WHERE d.especialidad = ? " +
@@ -39,12 +41,15 @@ public class DoctorRepository extends BaseRepository {
             ps.setString(1, especialidad);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    lista.add(new DoctorDisponibleDTO(
+                    DoctorDisponibleDTO dto = new DoctorDisponibleDTO(
                         rs.getInt("id_doctor"),
                         rs.getString("nombre_completo"),
                         rs.getString("especialidad"),
                         rs.getString("foto_url")
-                    ));
+                    );
+                    dto.setDescripcion(rs.getString("descripcion"));
+                    dto.setBibliografia(rs.getString("bibliografia"));
+                    lista.add(dto);
                 }
             }
         } catch (Exception e) {
@@ -87,7 +92,9 @@ public class DoctorRepository extends BaseRepository {
             "SELECT d.id_doctor, " +
             "       CONCAT(u.nombre, ' ', u.apellido) AS nombre_completo, " +
             "       d.especialidad, " +
-            "       d.foto_url " +
+            "       d.foto_url, " +
+            "       d.descripcion, " +
+            "       d.bibliografia " +
             "FROM doctores d " +
             "JOIN usuarios u ON d.id_usuario = u.id_usuario " +
             "WHERE u.estado = 'ACTIVO' " +
@@ -98,12 +105,15 @@ public class DoctorRepository extends BaseRepository {
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
-                lista.add(new DoctorDisponibleDTO(
+                DoctorDisponibleDTO dto = new DoctorDisponibleDTO(
                     rs.getInt("id_doctor"),
                     rs.getString("nombre_completo"),
                     rs.getString("especialidad"),
                     rs.getString("foto_url")
-                ));
+                );
+                dto.setDescripcion(rs.getString("descripcion"));
+                dto.setBibliografia(rs.getString("bibliografia"));
+                lista.add(dto);
             }
         } catch (Exception e) {
             throw new RuntimeException("Error listando doctores: " + e.getMessage());
@@ -182,7 +192,9 @@ public class DoctorRepository extends BaseRepository {
         String sql =
             "SELECT d.id_doctor, " +
             "       CONCAT(u.nombre, ' ', u.apellido) AS nombre_completo, " +
-            "       d.especialidad " +
+            "       d.especialidad, " +
+            "       d.descripcion, " +
+            "       d.bibliografia " +
             "FROM doctores d " +
             "JOIN usuarios u ON d.id_usuario = u.id_usuario " +
             "WHERE d.id_doctor = ?";
@@ -192,11 +204,14 @@ public class DoctorRepository extends BaseRepository {
             ps.setInt(1, idDoctor);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return Optional.of(new DoctorDisponibleDTO(
+                    DoctorDisponibleDTO dto = new DoctorDisponibleDTO(
                         rs.getInt("id_doctor"),
                         rs.getString("nombre_completo"),
                         rs.getString("especialidad")
-                    ));
+                    );
+                    dto.setDescripcion(rs.getString("descripcion"));
+                    dto.setBibliografia(rs.getString("bibliografia"));
+                    return Optional.of(dto);
                 }
             }
         } catch (Exception e) {

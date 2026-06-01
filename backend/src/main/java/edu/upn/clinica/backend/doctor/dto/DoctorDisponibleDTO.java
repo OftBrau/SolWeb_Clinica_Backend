@@ -11,6 +11,8 @@ public class DoctorDisponibleDTO {
     private String  nombre;       // nombre completo: "Dra. María Torres"
     private String  especialidad;
     private String  fotoUrl;
+    private String  descripcion;
+    private String  bibliografia;
 
     public DoctorDisponibleDTO() {}
 
@@ -38,4 +40,10 @@ public class DoctorDisponibleDTO {
 
     public String  getFotoUrl()                             { return fotoUrl; }
     public void    setFotoUrl(String fotoUrl)              { this.fotoUrl = fotoUrl; }
+
+    public String  getDescripcion()                         { return descripcion; }
+    public void    setDescripcion(String descripcion)      { this.descripcion = descripcion; }
+
+    public String  getBibliografia()                        { return bibliografia; }
+    public void    setBibliografia(String bibliografia)    { this.bibliografia = bibliografia; }
 }
