@@ -183,6 +183,31 @@ CREATE TABLE IF NOT EXISTS teleconsultas (
     FOREIGN KEY (id_doctor) REFERENCES doctores(id_doctor)
 );
 
+-- Chat de teleconsultas
+CREATE TABLE IF NOT EXISTS chat_mensajes (
+    id_mensaje BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_teleconsulta INT NOT NULL,
+    usuario VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    texto TEXT NOT NULL,
+    rol VARCHAR(50) NOT NULL,
+    hora VARCHAR(10),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_teleconsulta) REFERENCES teleconsultas(id_teleconsulta)
+);
+
+-- Notas de teleconsulta (CUS_19)
+CREATE TABLE IF NOT EXISTS notas_teleconsulta (
+    id_nota INT AUTO_INCREMENT PRIMARY KEY,
+    id_teleconsulta INT NOT NULL,
+    id_doctor INT NOT NULL,
+    contenido TEXT NOT NULL,
+    tipo VARCHAR(50) NOT NULL DEFAULT 'GENERAL',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_teleconsulta) REFERENCES teleconsultas(id_teleconsulta),
+    FOREIGN KEY (id_doctor) REFERENCES doctores(id_doctor)
+);
+
 -- Logs de actividad (CUS_49)
 CREATE TABLE IF NOT EXISTS logs_actividad (
     id_log INT AUTO_INCREMENT PRIMARY KEY,

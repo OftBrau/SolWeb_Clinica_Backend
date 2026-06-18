@@ -5,6 +5,8 @@ import edu.upn.clinica.backend.doctor.repository.DoctorRepository;
 import edu.upn.clinica.backend.paciente.repository.PacienteRepository;
 import edu.upn.clinica.backend.shared.ApiResponse;
 import edu.upn.clinica.backend.shared.AppException;
+import edu.upn.clinica.backend.teleconsulta.chat.ChatMensajeRepository;
+import edu.upn.clinica.backend.teleconsulta.chat.ChatMessage;
 import edu.upn.clinica.backend.teleconsulta.dto.SolicitarTeleconsultaRequest;
 import edu.upn.clinica.backend.teleconsulta.dto.TeleconsultaDTO;
 import edu.upn.clinica.backend.teleconsulta.service.TeleconsultaService;
@@ -29,6 +31,7 @@ public class TeleconsultaController {
     @Autowired private PacienteRepository pacienteRepository;
     @Autowired private DoctorRepository doctorRepository;
     @Autowired private UsuarioRepository usuarioRepository;
+    @Autowired private ChatMensajeRepository chatMensajeRepository;
 
     @GetMapping("/mis-teleconsultas")
     @Operation(summary = "Listar teleconsultas según el rol")
@@ -82,6 +85,13 @@ public class TeleconsultaController {
     public ResponseEntity<ApiResponse<TeleconsultaDTO>> obtenerPorCita(@PathVariable Integer idCita) {
         return ResponseEntity.ok(ApiResponse.ok("Teleconsulta encontrada",
                 teleconsultaService.buscarPorCita(idCita)));
+    }
+
+    @GetMapping("/{id}/mensajes")
+    @Operation(summary = "Obtener historial de chat de una teleconsulta")
+    public ResponseEntity<ApiResponse<List<ChatMessage>>> mensajes(@PathVariable Integer id) {
+        return ResponseEntity.ok(ApiResponse.ok("Mensajes obtenidos",
+                chatMensajeRepository.findByTeleconsulta(id)));
     }
 
     @GetMapping("/doctor/pendientes")
