@@ -67,6 +67,8 @@ public class SecurityConfig {
                 .hasRole("ADMINISTRADOR")
                 .requestMatchers("/api/doctores/**")
                 .hasAnyRole("DOCTOR", "ADMINISTRADOR")
+                .requestMatchers("/api/doctor/**")
+                .hasRole("DOCTOR")
                 .requestMatchers("/api/examenes/**")
                 .hasAnyRole("DOCTOR", "ADMINISTRADOR")
                 .requestMatchers("/api/practicante/**")

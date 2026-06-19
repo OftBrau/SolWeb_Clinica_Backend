@@ -123,6 +123,37 @@ public class EmailService {
         }
     }
 
+    // ─── Enviar PDF del historial clínico como adjunto ────
+    @Async
+    public void enviarHistorialPDF(String email, String nombrePaciente, byte[] pdfBytes, String idDocumento) {
+        try {
+            MimeMessage mensaje = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mensaje, true, "UTF-8");
+
+            helper.setFrom(remitente);
+            helper.setTo(email);
+            helper.setSubject("Historia Clínica - Clínica UPN");
+
+            String cuerpo = """
+                    <html><body>
+                    <h2>Historia Clínica</h2>
+                    <p>Hola, <strong>%s</strong>.</p>
+                    <p>Adjuntamos el documento de tu historial clínico solicitado.</p>
+                    <br><p>Clínica UPN</p>
+                    </body></html>
+                    """.formatted(nombrePaciente);
+
+            helper.setText(cuerpo, true);
+            helper.addAttachment("historial_" + idDocumento + ".pdf", () -> new java.io.ByteArrayInputStream(pdfBytes), "application/pdf");
+
+            mailSender.send(mensaje);
+
+        } catch (Exception e) {
+            System.err.println("Error al enviar PDF historial a " + email + ": " + e.getMessage());
+            throw new RuntimeException("Error al enviar el correo: " + e.getMessage());
+        }
+    }
+
     // ─── Enviar recordatorio de cita (CUS_13) ──────────────
     @Async
     public void enviarRecordatorioCita(String email, String nombrePaciente,

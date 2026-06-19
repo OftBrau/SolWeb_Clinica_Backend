@@ -6,11 +6,16 @@ import edu.upn.clinica.backend.hce.model.HistorialItem;
 import edu.upn.clinica.backend.hce.repository.HceRepository;
 import edu.upn.clinica.backend.paciente.repository.PacienteRepository;
 import edu.upn.clinica.backend.practicante.dto.ActividadDTO;
+import edu.upn.clinica.backend.practicante.dto.AsignarPracticanteRequest;
 import edu.upn.clinica.backend.practicante.dto.ConsultaPracDTO;
+import edu.upn.clinica.backend.practicante.dto.CrearActividadRequest;
+import edu.upn.clinica.backend.practicante.dto.CrearEvaluacionRequest;
 import edu.upn.clinica.backend.practicante.dto.EvaluacionDTO;
 import edu.upn.clinica.backend.practicante.dto.PacienteAsignadoDTO;
+import edu.upn.clinica.backend.practicante.dto.PracticanteDisponibleDTO;
 import edu.upn.clinica.backend.practicante.model.ActividadPracticante;
 import edu.upn.clinica.backend.practicante.model.EvaluacionPracticante;
+import edu.upn.clinica.backend.practicante.model.PracticanteEntidad;
 import edu.upn.clinica.backend.practicante.repository.PracticanteRepository;
 import edu.upn.clinica.backend.shared.AppException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -128,6 +133,74 @@ public class PracticanteService {
             dto.setUltimaConsulta((String) row[3]);
             return dto;
         }).toList();
+    }
+
+    // ─── Admin: Asignación de practicantes ────────────
+
+    public List<PracticanteEntidad> listarAsignaciones() {
+        return practicanteRepository.findAllAsignaciones();
+    }
+
+    public List<PracticanteDisponibleDTO> listarPracticantesDisponibles() {
+        return practicanteRepository.findPracticantesDisponibles()
+                .stream().map(row -> {
+                    PracticanteDisponibleDTO dto = new PracticanteDisponibleDTO();
+                    dto.setIdPracticante((Integer) row[0]);
+                    dto.setNombre((String) row[1]);
+                    dto.setApellido((String) row[2]);
+                    dto.setEmail((String) row[3]);
+                    return dto;
+                }).toList();
+    }
+
+    public void asignarPracticante(AsignarPracticanteRequest request) {
+        practicanteRepository.asignar(request.getIdPracticante(), request.getIdSupervisor());
+    }
+
+    public void eliminarAsignacion(Integer idAsignacion) {
+        practicanteRepository.eliminarAsignacion(idAsignacion);
+    }
+
+    // ─── Doctor: Gestión de practicantes asignados ────
+
+    public List<PracticanteEntidad> listarMisPracticantes(Integer idDoctor) {
+        return practicanteRepository.findAsignacionesByDoctor(idDoctor);
+    }
+
+    public List<ActividadDTO> listarActividadesComoSupervisor(Integer idSupervisor) {
+        return practicanteRepository.findActividadesBySupervisor(idSupervisor)
+                .stream().map(this::toActividadDTO).toList();
+    }
+
+    public ActividadDTO crearActividadParaPracticante(CrearActividadRequest request, Integer idSupervisor) {
+        ActividadPracticante a = new ActividadPracticante();
+        a.setIdPracticante(request.getIdPracticante());
+        a.setTitulo(request.getTitulo());
+        a.setDescripcion(request.getDescripcion());
+        a.setTipo(request.getTipo());
+        a.setFecha(request.getFecha() != null ? request.getFecha() : LocalDate.now());
+        a.setHora(request.getHora());
+        a.setEstado("PENDIENTE");
+        a.setIdPaciente(request.getIdPaciente());
+        a.setIdSupervisor(idSupervisor);
+        a = practicanteRepository.crearActividad(a);
+        return toActividadDTO(a);
+    }
+
+    public List<EvaluacionDTO> listarEvaluacionesComoSupervisor(Integer idSupervisor) {
+        return practicanteRepository.findEvaluacionesBySupervisor(idSupervisor)
+                .stream().map(this::toEvaluacionDTO).toList();
+    }
+
+    public EvaluacionDTO evaluarPracticante(CrearEvaluacionRequest request, Integer idSupervisor) {
+        EvaluacionPracticante e = new EvaluacionPracticante();
+        e.setIdPracticante(request.getIdPracticante());
+        e.setIdSupervisor(idSupervisor);
+        e.setFecha(LocalDate.now());
+        e.setPuntuacion(request.getPuntuacion());
+        e.setComentario(request.getComentario());
+        e = practicanteRepository.crearEvaluacion(e);
+        return toEvaluacionDTO(e);
     }
 
     public List<HistorialItem> verHistoriaClinica(Integer idPaciente, String email) {

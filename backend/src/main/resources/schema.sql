@@ -141,6 +141,18 @@ CREATE TABLE IF NOT EXISTS examenes (
     FOREIGN KEY (id_consulta) REFERENCES consultas(id_consulta)
 );
 
+-- Supervisión de practicantes (CUS_25/26)
+-- id_practicante = doctores.id_doctor del usuario con rol PRACTICANTE
+-- id_supervisor  = doctores.id_doctor del doctor supervisor
+CREATE TABLE IF NOT EXISTS supervision_practicantes (
+    id_asignacion   INT AUTO_INCREMENT PRIMARY KEY,
+    id_practicante  INT NOT NULL UNIQUE,
+    id_supervisor   INT NOT NULL,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_practicante) REFERENCES doctores(id_doctor),
+    FOREIGN KEY (id_supervisor)  REFERENCES doctores(id_doctor)
+);
+
 -- Actividades del practicante (CUS_25)
 CREATE TABLE IF NOT EXISTS actividades_practicante (
     id_actividad INT AUTO_INCREMENT PRIMARY KEY,

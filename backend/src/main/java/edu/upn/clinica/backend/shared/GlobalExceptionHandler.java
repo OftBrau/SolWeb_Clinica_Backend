@@ -33,6 +33,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<?>> handleGeneric(Exception ex) {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Error interno: " + ex.getMessage()));
+                .body(ApiResponse.error("Ha ocurrido un error inesperado. Intente nuevamente."));
     }
 }

@@ -3,10 +3,14 @@ package edu.upn.clinica.backend.hce.controller;
 import edu.upn.clinica.backend.hce.model.HistorialItem;
 import edu.upn.clinica.backend.hce.service.HceService;
 import edu.upn.clinica.backend.shared.ApiResponse;
+import edu.upn.clinica.backend.shared.EmailService;
+import edu.upn.clinica.backend.paciente.repository.PacienteRepository;
+import edu.upn.clinica.backend.shared.AppException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -21,6 +25,8 @@ import java.util.List;
 public class HceController {
 
     @Autowired private HceService hceService;
+    @Autowired private EmailService emailService;
+    @Autowired private PacienteRepository pacienteRepository;
 
     @GetMapping("/documentos")
     @Operation(summary = "Listar historial clínico del paciente autenticado")
@@ -57,5 +63,21 @@ public class HceController {
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(pdf);
+    }
+
+    @PostMapping("/documentos/{id}/enviar")
+    @Operation(summary = "Enviar documento de la HCE en PDF al correo del paciente")
+    public ResponseEntity<ApiResponse<Void>> enviarPorEmail(@PathVariable Integer id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+
+        String nombrePaciente = pacienteRepository.findByEmail(email)
+                .map(p -> p.getNombre() + " " + p.getApellido())
+                .orElse("Paciente");
+
+        byte[] pdf = hceService.generarReportePDF(id);
+        emailService.enviarHistorialPDF(email, nombrePaciente, pdf, id.toString());
+
+        return ResponseEntity.ok(ApiResponse.ok("Documento enviado a tu correo: " + email));
     }
 }
