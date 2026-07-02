@@ -8,10 +8,13 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -33,6 +36,15 @@ public class AuthController {
             @Valid @RequestBody LoginRequest request) {
         LoginResponse response = authService.login(request);
         return ResponseEntity.ok(ApiResponse.ok("Login exitoso", response));
+    }
+
+    @PostMapping("/register")
+    @Operation(summary = "Registrar nuevo usuario (DOCTOR o PACIENTE)")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> register(
+            @Valid @RequestBody RegisterRequest request) {
+        Map<String, Object> result = authService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok("Registro exitoso", result));
     }
 
     @GetMapping("/perfil")
