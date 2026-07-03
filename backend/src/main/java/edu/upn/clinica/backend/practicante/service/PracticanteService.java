@@ -183,6 +183,8 @@ public class PracticanteService {
         a.setEstado("PENDIENTE");
         a.setIdPaciente(request.getIdPaciente());
         a.setIdSupervisor(idSupervisor);
+        a.setIdCita(request.getIdCita());
+        a.setIdTeleconsulta(request.getIdTeleconsulta());
         a = practicanteRepository.crearActividad(a);
         return toActividadDTO(a);
     }

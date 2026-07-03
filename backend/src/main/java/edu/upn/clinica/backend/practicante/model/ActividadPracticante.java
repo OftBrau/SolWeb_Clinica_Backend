@@ -14,6 +14,8 @@ public class ActividadPracticante {
     private String estado;
     private Integer idPaciente;
     private Integer idSupervisor;
+    private Integer idCita;
+    private Integer idTeleconsulta;
 
     public ActividadPracticante() {}
 
@@ -46,4 +48,10 @@ public class ActividadPracticante {
 
     public Integer getIdSupervisor() { return idSupervisor; }
     public void setIdSupervisor(Integer v) { this.idSupervisor = v; }
+
+    public Integer getIdCita() { return idCita; }
+    public void setIdCita(Integer v) { this.idCita = v; }
+
+    public Integer getIdTeleconsulta() { return idTeleconsulta; }
+    public void setIdTeleconsulta(Integer v) { this.idTeleconsulta = v; }
 }

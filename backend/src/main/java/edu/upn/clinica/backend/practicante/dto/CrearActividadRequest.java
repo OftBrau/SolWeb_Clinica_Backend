@@ -23,6 +23,10 @@ public class CrearActividadRequest {
 
     private Integer idPaciente;
 
+    private Integer idCita;
+
+    private Integer idTeleconsulta;
+
     public @NotNull Integer getIdPracticante() { return idPracticante; }
     public void setIdPracticante(@NotNull Integer v) { this.idPracticante = v; }
 
@@ -43,4 +47,10 @@ public class CrearActividadRequest {
 
     public Integer getIdPaciente() { return idPaciente; }
     public void setIdPaciente(Integer v) { this.idPaciente = v; }
+
+    public Integer getIdCita() { return idCita; }
+    public void setIdCita(Integer v) { this.idCita = v; }
+
+    public Integer getIdTeleconsulta() { return idTeleconsulta; }
+    public void setIdTeleconsulta(Integer v) { this.idTeleconsulta = v; }
 }

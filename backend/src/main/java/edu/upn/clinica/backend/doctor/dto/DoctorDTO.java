@@ -10,6 +10,7 @@ public class DoctorDTO {
     private String cmp;
     private String fotoUrl;
     private String estado;
+    private Boolean destacado;
 
     public DoctorDTO() {}
 
@@ -39,4 +40,7 @@ public class DoctorDTO {
 
     public String getEstado() { return estado; }
     public void setEstado(String v) { this.estado = v; }
+
+    public Boolean getDestacado() { return destacado; }
+    public void setDestacado(Boolean v) { this.destacado = v; }
 }

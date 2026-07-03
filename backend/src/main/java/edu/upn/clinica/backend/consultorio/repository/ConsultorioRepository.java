@@ -6,7 +6,9 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -154,5 +156,93 @@ public class ConsultorioRepository extends BaseRepository {
         c.setUbicacion(rs.getString("ubicacion"));
         c.setEstado(rs.getString("estado"));
         return c;
+    }
+
+    public List<Map<String, Object>> findAllAsignaciones() {
+        String sql = "SELECT dc.id_asignacion, dc.id_doctor, dc.id_consultorio, c.nombre AS consultorio, " +
+                "CONCAT(u.nombre, ' ', u.apellido) AS doctor, dc.dia_semana, dc.hora_inicio, dc.hora_fin " +
+                "FROM doctor_consultorio dc " +
+                "JOIN consultorios c ON dc.id_consultorio = c.id_consultorio " +
+                "JOIN doctores d ON dc.id_doctor = d.id_doctor " +
+                "JOIN usuarios u ON d.id_usuario = u.id_usuario " +
+                "ORDER BY dc.dia_semana, dc.hora_inicio";
+        List<Map<String, Object>> list = new ArrayList<>();
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> m = new java.util.LinkedHashMap<>();
+                    m.put("idAsignacion", rs.getInt("id_asignacion"));
+                    m.put("idDoctor", rs.getInt("id_doctor"));
+                    m.put("idConsultorio", rs.getInt("id_consultorio"));
+                    m.put("consultorio", rs.getString("consultorio"));
+                    m.put("doctor", rs.getString("doctor"));
+                    m.put("diaSemana", rs.getString("dia_semana"));
+                    m.put("horaInicio", rs.getTime("hora_inicio").toString().substring(0,5));
+                    m.put("horaFin", rs.getTime("hora_fin").toString().substring(0,5));
+                    list.add(m);
+                }
+            }
+        } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+        return list;
+    }
+
+    public void deleteAsignacion(Integer id) {
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement("DELETE FROM doctor_consultorio WHERE id_asignacion = ?")) {
+            ps.setInt(1, id); ps.executeUpdate();
+        } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+    }
+
+    public Integer findConsultorioForDoctor(Integer idDoctor, String diaSemana, String hora) {
+        String sql = "SELECT c.id_consultorio FROM consultorios c " +
+                "JOIN doctor_consultorio dc ON c.id_consultorio = dc.id_consultorio AND dc.id_doctor = ? " +
+                "AND dc.dia_semana = ? AND dc.hora_inicio <= ? AND dc.hora_fin > ? " +
+                "WHERE c.estado = 'ACTIVO' " +
+                "AND c.id_consultorio NOT IN (" +
+                "  SELECT ct.id_consultorio FROM citas ct " +
+                "  WHERE ct.fecha = CURDATE() AND ct.hora = ? AND ct.estado NOT IN ('CANCELADA','NO_ASISTIO')" +
+                ") LIMIT 1";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idDoctor);
+            ps.setString(2, diaSemana);
+            ps.setTime(3, java.sql.Time.valueOf(hora + ":00"));
+            ps.setTime(4, java.sql.Time.valueOf(hora + ":00"));
+            ps.setTime(5, java.sql.Time.valueOf(hora + ":00"));
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt("id_consultorio");
+            }
+        } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+        return findDisponiblesPorHorario(diaSemana, hora).stream()
+                .findFirst().map(Consultorio::getIdConsultorio).orElse(null);
+    }
+
+    public List<Map<String, Object>> findOcupacion(String fecha) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        String sql = "SELECT c.id_consultorio, c.nombre, c.ubicacion, ct.hora, ct.estado, " +
+                "CONCAT(u.nombre,' ',u.apellido) AS doctor, CONCAT(up.nombre,' ',up.apellido) AS paciente " +
+                "FROM consultorios c " +
+                "LEFT JOIN citas ct ON ct.id_consultorio = c.id_consultorio AND ct.fecha = ? AND ct.estado IN ('CONFIRMADA','EN_ATENCION') " +
+                "LEFT JOIN doctores d ON ct.id_doctor = d.id_doctor " +
+                "LEFT JOIN usuarios u ON d.id_usuario = u.id_usuario " +
+                "LEFT JOIN pacientes p ON ct.id_paciente = p.id_paciente " +
+                "LEFT JOIN usuarios up ON p.id_usuario = up.id_usuario " +
+                "WHERE c.estado = 'ACTIVO' " +
+                "ORDER BY c.nombre, ct.hora";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, fecha);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> m = new java.util.LinkedHashMap<>();
+                    m.put("idConsultorio", rs.getInt("id_consultorio"));
+                    m.put("nombre", rs.getString("nombre"));
+                    m.put("ubicacion", rs.getString("ubicacion"));
+                    m.put("hora", rs.getTime("hora") != null ? rs.getTime("hora").toString().substring(0,5) : null);
+                    m.put("estado", rs.getString("estado"));
+                    m.put("doctor", rs.getString("doctor"));
+                    m.put("paciente", rs.getString("paciente"));
+                    result.add(m);
+                }
+            }
+        } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+        return result;
     }
 }

@@ -38,6 +38,7 @@ public class AgendaController {
 
         LocalDate dia = (fecha != null) ? LocalDate.parse(fecha) : LocalDate.now(ZoneId.of("America/Lima"));
         boolean esAdmin = tieneRol("ADMINISTRADOR") || tieneRol("DIRECTOR");
+        boolean esDoctor = tieneRol("DOCTOR") || tieneRol("MEDICO");
 
         List<AgendaItemResponse> agenda;
         if (esAdmin) {
@@ -47,9 +48,11 @@ public class AgendaController {
             } else {
                 agenda = agendaService.verTodasLasAgendas(dia);
             }
-        } else {
+        } else if (esDoctor) {
             Integer idDoc = getDoctorId();
             agenda = agendaService.verAgenda(idDoc, dia);
+        } else {
+            agenda = List.of();
         }
 
         return ResponseEntity.ok(ApiResponse.ok("Agenda obtenida", agenda));

@@ -11,6 +11,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -48,15 +49,18 @@ public class SecurityConfig {
                         "/api/cita-publica/**", 
                         "/swagger-ui/**",
                         "/swagger-ui.html",
-                        "/ws/**"
+                        "/ws/**",
+                        "/api/farmacia/pagos/notificacion",
+                        "/api/farmacia/reclamaciones/publico",
+                        "/api/farmacia/ventas/checkout-public"
                 ).permitAll()
                 .requestMatchers("/api/admin/hce/**").hasRole("ADMINISTRADOR")
                 .requestMatchers("/api/hce/**")
-                .hasAnyRole("PACIENTE", "DOCTOR", "ADMINISTRADOR", "DIRECTOR")
+                .hasAnyRole("PACIENTE", "DOCTOR", "ADMINISTRADOR", "DIRECTOR", "PRACTICANTE")
                 .requestMatchers("/api/citas/**").hasRole("PACIENTE")
                 .requestMatchers("/api/mis-citas/**").hasRole("PACIENTE")
                 .requestMatchers("/api/teleconsulta/**")
-                .hasAnyRole("PACIENTE", "DOCTOR", "ADMINISTRADOR", "DIRECTOR")
+                .hasAnyRole("PACIENTE", "DOCTOR", "ADMINISTRADOR", "DIRECTOR", "PRACTICANTE")
                 .requestMatchers("/api/consultas/**")
                 .hasAnyRole("DOCTOR", "PRACTICANTE", "ADMINISTRADOR", "DIRECTOR")
                 .requestMatchers("/api/operaciones/**")
@@ -81,8 +85,29 @@ public class SecurityConfig {
                 .requestMatchers("/api/appointments").hasRole("PACIENTE")
                 .requestMatchers("/api/examenes/**")
                 .hasAnyRole("DOCTOR", "ADMINISTRADOR")
+                .requestMatchers("/api/practicante/invitaciones/doctor", "/api/practicante/invitaciones").hasAnyRole("DOCTOR", "MEDICO")
+                .requestMatchers("/api/practicante/invitaciones/{id}/aceptar", "/api/practicante/invitaciones/{id}/rechazar").hasRole("PRACTICANTE")
+                .requestMatchers("/api/practicante/mis-invitaciones/**").hasRole("PRACTICANTE")
                 .requestMatchers("/api/practicante/**")
                 .hasAnyRole("PRACTICANTE", "DOCTOR", "ADMINISTRADOR", "DIRECTOR")
+                .requestMatchers(HttpMethod.GET, "/api/farmacia/medicamentos/**").permitAll()
+                .requestMatchers("/api/farmacia/medicamentos/**")
+                .hasAnyRole("PACIENTE", "DOCTOR", "ADMINISTRADOR", "ADMINISTRATIVO", "DIRECTOR")
+                .requestMatchers("/api/farmacia/ventas/**")
+                .hasAnyRole("PACIENTE", "ADMINISTRADOR", "ADMINISTRATIVO")
+                .requestMatchers("/api/farmacia/carrito/**")
+                .hasAnyRole("PACIENTE", "ADMINISTRADOR", "PRACTICANTE")
+                .requestMatchers("/api/farmacia/reclamaciones/{id}/responder", "/api/farmacia/reclamaciones")
+                .hasAnyRole("ADMINISTRADOR", "ADMINISTRATIVO")
+                .requestMatchers("/api/farmacia/reclamaciones/mis-reclamaciones")
+                .hasRole("PACIENTE")
+                .requestMatchers("/api/farmacia/reclamaciones/{id}")
+                .hasAnyRole("PACIENTE", "ADMINISTRADOR", "ADMINISTRATIVO")
+                .requestMatchers("/api/farmacia/pagos/**")
+                .hasAnyRole("PACIENTE", "ADMINISTRADOR", "ADMINISTRATIVO")
+                .requestMatchers("/api/perfil/foto").authenticated()
+                .requestMatchers("/api/perfil/profesional/**").hasAnyRole("PRACTICANTE", "DOCTOR", "ADMINISTRADOR", "DIRECTOR")
+                .requestMatchers("/api/perfil/practicantes").hasAnyRole("DOCTOR", "ADMINISTRADOR", "DIRECTOR")
                 .anyRequest().authenticated()
                 )
                 // Filtro JWT

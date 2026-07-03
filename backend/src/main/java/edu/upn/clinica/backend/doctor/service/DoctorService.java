@@ -102,6 +102,18 @@ public class DoctorService {
         doctorRepository.deleteById(idDoctor);
     }
 
+    public void activar(Integer idDoctor) {
+        doctorRepository.findById(idDoctor)
+                .orElseThrow(() -> new AppException("Doctor no encontrado", HttpStatus.NOT_FOUND));
+        doctorRepository.reactivateById(idDoctor);
+    }
+
+    public void toggleDestacado(Integer idDoctor) {
+        doctorRepository.findById(idDoctor)
+                .orElseThrow(() -> new AppException("Doctor no encontrado", HttpStatus.NOT_FOUND));
+        doctorRepository.toggleDestacado(idDoctor);
+    }
+
     public void actualizarFoto(Integer idDoctor, String fotoUrl) {
         doctorRepository.findById(idDoctor)
                 .orElseThrow(() -> new AppException("Doctor no encontrado", HttpStatus.NOT_FOUND));

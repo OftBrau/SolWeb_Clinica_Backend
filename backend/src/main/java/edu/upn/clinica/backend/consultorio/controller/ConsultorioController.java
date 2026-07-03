@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/operaciones/consultorios")
@@ -61,10 +62,43 @@ public class ConsultorioController {
     }
 
     @PostMapping("/asignar")
-    @Operation(summary = "Asignar consultorio a doctor (CUS_37)")
+    @Operation(summary = "Asignar consultorio a doctor")
     public ResponseEntity<ApiResponse<Void>> asignar(
             @Valid @RequestBody AsignarConsultorioRequest request) {
         consultorioService.asignarADoctor(request);
         return ResponseEntity.ok(ApiResponse.ok("Consultorio asignado correctamente"));
+    }
+
+    @GetMapping("/asignaciones")
+    @Operation(summary = "Listar todas las asignaciones doctor-consultorio")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> listarAsignaciones() {
+        return ResponseEntity.ok(ApiResponse.ok("Asignaciones", consultorioService.listarAsignaciones()));
+    }
+
+    @DeleteMapping("/asignaciones/{id}")
+    @Operation(summary = "Eliminar una asignacion")
+    public ResponseEntity<ApiResponse<Void>> eliminarAsignacion(@PathVariable Integer id) {
+        consultorioService.eliminarAsignacion(id);
+        return ResponseEntity.ok(ApiResponse.ok("Asignacion eliminada"));
+    }
+
+    @PatchMapping("/{id}/activar")
+    @Operation(summary = "Reactivar consultorio")
+    public ResponseEntity<ApiResponse<Void>> activar(@PathVariable Integer id) {
+        consultorioService.activar(id);
+        return ResponseEntity.ok(ApiResponse.ok("Consultorio reactivado"));
+    }
+
+    @GetMapping("/disponibles")
+    @Operation(summary = "Consultorios disponibles en un dia y hora")
+    public ResponseEntity<ApiResponse<List<ConsultorioDTO>>> disponibles(
+            @RequestParam String diaSemana, @RequestParam String hora) {
+        return ResponseEntity.ok(ApiResponse.ok("Disponibles", consultorioService.disponibles(diaSemana, hora)));
+    }
+
+    @GetMapping("/ocupacion")
+    @Operation(summary = "Ocupacion de consultorios en una fecha")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> ocupacion(@RequestParam String fecha) {
+        return ResponseEntity.ok(ApiResponse.ok("Ocupacion", consultorioService.ocupacion(fecha)));
     }
 }

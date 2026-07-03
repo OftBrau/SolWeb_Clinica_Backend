@@ -19,9 +19,11 @@ import java.util.Optional;
 public class CitaRepository extends BaseRepository {
 
     private static final String SELECT_BASE
-            = "SELECT id_cita, id_paciente, id_doctor, id_consultorio, "
-            + "fecha, hora, estado, tipo, motivo "
-            + "FROM citas ";
+            = "SELECT c.id_cita, c.id_paciente, c.id_doctor, c.id_consultorio, "
+            + "c.fecha, c.hora, c.estado, c.tipo, c.motivo, "
+            + "COALESCE(co.nombre, 'Sin asignar') AS consultorio "
+            + "FROM citas c "
+            + "LEFT JOIN consultorios co ON c.id_consultorio = co.id_consultorio ";
 
     // --- Insertar nueva cita ---
     public Cita save(Cita cita) {
@@ -124,25 +126,25 @@ public class CitaRepository extends BaseRepository {
 
     // --- Listar citas por paciente ---
     public List<Cita> findByPaciente(Integer idPaciente) {
-        String sql = SELECT_BASE + "WHERE id_paciente = ? ORDER BY fecha DESC, hora DESC";
+        String sql = SELECT_BASE + "WHERE c.id_paciente = ? ORDER BY c.fecha DESC, c.hora DESC";
         return query(sql, idPaciente);
     }
 
     // --- Listar citas por doctor y fecha (agenda) ---
     public List<Cita> findByDoctorAndFecha(Integer idDoctor, LocalDate fecha) {
-        String sql = SELECT_BASE + "WHERE id_doctor = ? AND fecha = ? ORDER BY hora";
+        String sql = SELECT_BASE + "WHERE c.id_doctor = ? AND c.fecha = ? ORDER BY c.hora";
         return query(sql, idDoctor, Date.valueOf(fecha));
     }
 
     // --- Listar citas por estado (para administrativo) ---
     public List<Cita> findAllByEstado(String estado, int page, int size) {
-        String sql = SELECT_BASE + "WHERE estado = ? ORDER BY fecha DESC, hora DESC LIMIT ? OFFSET ?";
+        String sql = SELECT_BASE + "WHERE c.estado = ? ORDER BY c.fecha DESC, c.hora DESC LIMIT ? OFFSET ?";
         return query(sql, estado, size, page * size);
     }
 
     // --- Contar citas por estado ---
     public long countByEstado(String estado) {
-        String sql = "SELECT COUNT(*) FROM citas WHERE estado = ?";
+        String sql = "SELECT COUNT(*) FROM citas c WHERE c.estado = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, estado);
             try (ResultSet rs = ps.executeQuery()) {
@@ -155,19 +157,19 @@ public class CitaRepository extends BaseRepository {
 
     // --- Listar todas las citas de una fecha (para admin/director) ---
     public List<Cita> findAllByFecha(LocalDate fecha) {
-        String sql = SELECT_BASE + "WHERE fecha = ? ORDER BY id_doctor, hora";
+        String sql = SELECT_BASE + "WHERE c.fecha = ? ORDER BY c.id_doctor, c.hora";
         return query(sql, Date.valueOf(fecha));
     }
 
     // --- Listar citas por fecha y estado ---
     public List<Cita> findAllByFechaAndEstado(LocalDate fecha, String estado) {
-        String sql = SELECT_BASE + "WHERE fecha = ? AND estado = ? ORDER BY hora";
+        String sql = SELECT_BASE + "WHERE c.fecha = ? AND c.estado = ? ORDER BY c.hora";
         return query(sql, Date.valueOf(fecha), estado);
     }
 
     // --- Buscar por ID ---
     public Optional<Cita> findById(Integer id) {
-        String sql = SELECT_BASE + "WHERE id_cita = ?";
+        String sql = SELECT_BASE + "WHERE c.id_cita = ?";
         List<Cita> result = query(sql, id);
         return result.isEmpty() ? Optional.empty() : Optional.of(result.get(0));
     }
@@ -205,6 +207,7 @@ public class CitaRepository extends BaseRepository {
         c.setEstado(rs.getString("estado"));
         c.setTipo(rs.getString("tipo"));
         c.setMotivo(rs.getString("motivo"));
+        c.setConsultorio(rs.getString("consultorio"));
         return c;
     }
 }

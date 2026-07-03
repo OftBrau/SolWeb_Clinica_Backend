@@ -4,6 +4,7 @@ import edu.upn.clinica.backend.cita.dto.CitaPublicaRequest;
 import edu.upn.clinica.backend.cita.dto.CitaPublicaResponse;
 import edu.upn.clinica.backend.cita.model.Cita;
 import edu.upn.clinica.backend.cita.repository.CitaRepository;
+import edu.upn.clinica.backend.consultorio.repository.ConsultorioRepository;
 import edu.upn.clinica.backend.doctor.dto.DoctorDisponibleDTO;
 import edu.upn.clinica.backend.doctor.repository.DoctorRepository;
 import edu.upn.clinica.backend.paciente.model.Paciente;
@@ -47,6 +48,9 @@ public class CitaPublicaService {
 
     @Autowired
     private SimpMessagingTemplate messaging;
+
+    @Autowired
+    private ConsultorioRepository consultorioRepository;
 
     // ─── 1. Buscar paciente existente ───────────────────────
     public Paciente buscarPaciente(String email, String codigoEstudiante) {
@@ -105,11 +109,19 @@ public class CitaPublicaService {
                     "Ese horario ya está ocupado. Elige otra hora.", HttpStatus.CONFLICT);
         }
 
+        // Auto-asignar consultorio
+        String diaSemana = switch (fecha.getDayOfWeek()) {
+            case MONDAY -> "LUNES"; case TUESDAY -> "MARTES"; case WEDNESDAY -> "MIERCOLES";
+            case THURSDAY -> "JUEVES"; case FRIDAY -> "VIERNES"; case SATURDAY -> "SABADO";
+            default -> "LUNES";
+        };
+        Integer idConsultorio = consultorioRepository.findConsultorioForDoctor(idDoctor, diaSemana, hora.toString());
+
         // Guardar cita
         Cita cita = new Cita();
         cita.setIdPaciente(idPaciente);
         cita.setIdDoctor(idDoctor);
-        cita.setIdConsultorio(null);
+        cita.setIdConsultorio(idConsultorio);
         cita.setFecha(fecha);
         cita.setHora(hora);
         cita.setEstado("CONFIRMADA");
@@ -163,10 +175,16 @@ public class CitaPublicaService {
                         "Nueva cita agendada: " + nombrePaciente + " con " + doctor.getNombre(),
                         guardada.getIdCita()));
 
+        // Obtener nombre del consultorio
+        String consultorioNombre = guardada.getIdConsultorio() != null
+                ? consultorioRepository.findById(guardada.getIdConsultorio())
+                    .map(c -> c.getNombre()).orElse("Sin asignar")
+                : "Sin asignar";
+
         return new CitaPublicaResponse(
                 guardada.getIdCita(), nombrePaciente, doctor.getNombre(),
                 doctor.getEspecialidad(), fecha.toString(), hora.toString(),
-                guardada.getEstado(), guardada.getTipo(), linkSala
+                guardada.getEstado(), guardada.getTipo(), linkSala, consultorioNombre
         );
     }
 

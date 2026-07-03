@@ -49,10 +49,24 @@ public class AdminDoctorController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Eliminar (desactivar) un doctor (CUS_45)")
+    @Operation(summary = "Eliminar (desactivar) un doctor")
     public ResponseEntity<ApiResponse<Void>> eliminar(@PathVariable Integer id) {
         doctorService.eliminar(id);
         return ResponseEntity.ok(ApiResponse.ok("Doctor desactivado correctamente"));
+    }
+
+    @PutMapping("/{id}/activar")
+    @Operation(summary = "Reactivar un doctor")
+    public ResponseEntity<ApiResponse<Void>> activar(@PathVariable Integer id) {
+        doctorService.activar(id);
+        return ResponseEntity.ok(ApiResponse.ok("Doctor reactivado correctamente"));
+    }
+
+    @PatchMapping("/{id}/destacar")
+    @Operation(summary = "Marcar/desmarcar doctor como destacado")
+    public ResponseEntity<ApiResponse<Void>> toggleDestacado(@PathVariable Integer id) {
+        doctorService.toggleDestacado(id);
+        return ResponseEntity.ok(ApiResponse.ok("Destacado actualizado"));
     }
 
     @PatchMapping("/{id}/especialidad")

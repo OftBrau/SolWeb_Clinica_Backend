@@ -13,6 +13,7 @@ public class Cita {
     private Integer   idPaciente;
     private Integer   idDoctor;
     private Integer   idConsultorio;
+    private String    consultorio;
     private LocalDate fecha;
     private LocalTime hora;
     private String    estado;   // CONFIRMADA | EN_ATENCION | ATENDIDA | CANCELADA | NO_ASISTIO
@@ -32,6 +33,8 @@ public class Cita {
 
     public Integer   getIdConsultorio()                       { return idConsultorio; }
     public void      setIdConsultorio(Integer id)            { this.idConsultorio = id; }
+    public String    getConsultorio()                          { return consultorio; }
+    public void      setConsultorio(String name)               { this.consultorio = name; }
 
     public LocalDate getFecha()                               { return fecha; }
     public void      setFecha(LocalDate fecha)               { this.fecha = fecha; }

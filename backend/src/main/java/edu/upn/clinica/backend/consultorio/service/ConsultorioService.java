@@ -9,7 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ConsultorioService {
@@ -47,6 +50,24 @@ public class ConsultorioService {
         consultorioRepository.findById(id)
                 .orElseThrow(() -> new AppException("Consultorio no encontrado", HttpStatus.NOT_FOUND));
         consultorioRepository.updateEstado(id, "INACTIVO");
+    }
+
+    public void activar(Integer id) {
+        consultorioRepository.findById(id)
+                .orElseThrow(() -> new AppException("Consultorio no encontrado", HttpStatus.NOT_FOUND));
+        consultorioRepository.updateEstado(id, "ACTIVO");
+    }
+
+    public List<Map<String, Object>> listarAsignaciones() {
+        return consultorioRepository.findAllAsignaciones();
+    }
+
+    public void eliminarAsignacion(Integer id) {
+        consultorioRepository.deleteAsignacion(id);
+    }
+
+    public List<Map<String, Object>> ocupacion(String fecha) {
+        return consultorioRepository.findOcupacion(fecha);
     }
 
     public void asignarADoctor(AsignarConsultorioRequest request) {

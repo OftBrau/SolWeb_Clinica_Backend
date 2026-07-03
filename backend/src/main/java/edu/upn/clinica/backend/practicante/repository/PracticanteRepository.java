@@ -8,7 +8,9 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -167,8 +169,8 @@ public class PracticanteRepository extends BaseRepository {
             "       up.nombre AS nombre_usuario, up.apellido AS apellido_usuario, up.email AS email_usuario, " +
             "       us.nombre AS nombre_doctor, us.apellido AS apellido_doctor " +
             "FROM supervision_practicantes sp " +
-            "JOIN doctores dp ON sp.id_practicante = dp.id_doctor " +
-            "JOIN usuarios up ON dp.id_usuario = up.id_usuario " +
+            "JOIN practicantes p ON sp.id_practicante = p.id_practicante " +
+            "JOIN usuarios up ON p.id_usuario = up.id_usuario " +
             "JOIN doctores ds ON sp.id_supervisor = ds.id_doctor " +
             "JOIN usuarios us ON ds.id_usuario = us.id_usuario " +
             "WHERE sp.id_supervisor = ? " +
@@ -250,8 +252,8 @@ public class PracticanteRepository extends BaseRepository {
     // ─── Doctor: Gestión de actividades para practicantes ──
 
     public ActividadPracticante crearActividad(ActividadPracticante a) {
-        String sql = "INSERT INTO actividades_practicante (id_practicante, titulo, descripcion, tipo, fecha, hora, estado, id_paciente, id_supervisor) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO actividades_practicante (id_practicante, titulo, descripcion, tipo, fecha, hora, estado, id_paciente, id_supervisor, id_cita, id_teleconsulta) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, a.getIdPracticante());
@@ -265,6 +267,10 @@ public class PracticanteRepository extends BaseRepository {
             else ps.setNull(8, Types.INTEGER);
             if (a.getIdSupervisor() != null) ps.setInt(9, a.getIdSupervisor());
             else ps.setNull(9, Types.INTEGER);
+            if (a.getIdCita() != null) ps.setInt(10, a.getIdCita());
+            else ps.setNull(10, Types.INTEGER);
+            if (a.getIdTeleconsulta() != null) ps.setInt(11, a.getIdTeleconsulta());
+            else ps.setNull(11, Types.INTEGER);
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) a.setIdActividad(rs.getInt(1));
@@ -368,5 +374,149 @@ public class PracticanteRepository extends BaseRepository {
         e.setPuntuacion(rs.getDouble("puntuacion"));
         e.setComentario(rs.getString("comentario"));
         return e;
+    }
+
+    // --- Invitaciones ---
+    public Map<String, Object> saveInvitacion(Integer idDoctor, Integer idPracticante, String mensaje) {
+        String sql = "INSERT INTO invitaciones_practicante (id_doctor, id_practicante, mensaje) VALUES (?,?,?)";
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, idDoctor); ps.setInt(2, idPracticante); ps.setString(3, mensaje);
+            ps.executeUpdate();
+            try (ResultSet keys = ps.getGeneratedKeys()) { if (keys.next()) return java.util.Map.of("id", keys.getInt(1)); }
+        } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+        return java.util.Map.of();
+    }
+
+    public List<java.util.Map<String, Object>> findInvitacionesByPracticante(Integer idPracticante) {
+        List<java.util.Map<String, Object>> list = new ArrayList<>();
+        String sql = "SELECT i.*, CONCAT(u.nombre,' ',u.apellido) AS doctor, d.especialidad FROM invitaciones_practicante i " +
+                "JOIN doctores d ON i.id_doctor = d.id_doctor JOIN usuarios u ON d.id_usuario = u.id_usuario " +
+                "WHERE i.id_practicante = ? ORDER BY i.fecha_creacion DESC";
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, idPracticante);
+            try (ResultSet rs = ps.executeQuery()) { while (rs.next()) list.add(mapInvitacion(rs)); }
+        } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+        return list;
+    }
+
+    public List<java.util.Map<String, Object>> findInvitacionesByDoctor(Integer idDoctor) {
+        List<java.util.Map<String, Object>> list = new ArrayList<>();
+        String sql = "SELECT i.*, CONCAT(u.nombre,' ',u.apellido) AS practicante FROM invitaciones_practicante i " +
+                "JOIN practicantes p ON i.id_practicante = p.id_practicante JOIN usuarios u ON p.id_usuario = u.id_usuario " +
+                "WHERE i.id_doctor = ? ORDER BY i.fecha_creacion DESC";
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, idDoctor);
+            try (ResultSet rs = ps.executeQuery()) { while (rs.next()) list.add(mapInvitacion(rs)); }
+        } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+        return list;
+    }
+
+    public void updateInvitacionEstado(Integer id, String estado) {
+        String sql = "UPDATE invitaciones_practicante SET estado = ?, fecha_respuesta = CURRENT_TIMESTAMP WHERE id_invitacion = ?";
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, estado); ps.setInt(2, id); ps.executeUpdate();
+        } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+    }
+
+    public java.util.Map<String, Object> findInvitacionById(Integer id) {
+        String sql = "SELECT i.*, CONCAT(du.nombre,' ',du.apellido) AS doctor, " +
+                "CONCAT(pu.nombre,' ',pu.apellido) AS practicante, d.especialidad " +
+                "FROM invitaciones_practicante i " +
+                "JOIN doctores d ON i.id_doctor = d.id_doctor JOIN usuarios du ON d.id_usuario = du.id_usuario " +
+                "JOIN practicantes p ON i.id_practicante = p.id_practicante JOIN usuarios pu ON p.id_usuario = pu.id_usuario " +
+                "WHERE i.id_invitacion = ?";
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) { if (rs.next()) return mapInvitacion(rs); }
+        } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+        return null;
+    }
+
+    public void asignarSupervision(Integer idDoctor, Integer idPracticante) {
+        String sql = "INSERT IGNORE INTO supervision_practicantes (id_supervisor, id_practicante) VALUES (?,?)";
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, idDoctor); ps.setInt(2, idPracticante); ps.executeUpdate();
+        } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+    }
+
+    private java.util.Map<String, Object> mapInvitacion(ResultSet rs) throws Exception {
+        java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
+        m.put("idInvitacion", rs.getInt("id_invitacion"));
+        m.put("idDoctor", rs.getInt("id_doctor"));
+        m.put("idPracticante", rs.getInt("id_practicante"));
+        m.put("mensaje", rs.getString("mensaje"));
+        m.put("estado", rs.getString("estado"));
+        Timestamp fc = rs.getTimestamp("fecha_creacion");
+        if (fc != null) m.put("fechaCreacion", fc.toLocalDateTime().toString());
+        Timestamp fr = rs.getTimestamp("fecha_respuesta");
+        if (fr != null) m.put("fechaRespuesta", fr.toLocalDateTime().toString());
+        try { m.put("doctor", rs.getString("doctor")); } catch (Exception e) {}
+        try { m.put("practicante", rs.getString("practicante")); } catch (Exception e) {}
+        try { m.put("especialidad", rs.getString("especialidad")); } catch (Exception e) {}
+        return m;
+    }
+
+    // --- Tareas ---
+    public Map<String, Object> saveTarea(Integer idDoctor, Integer idPracticante, String titulo, String descripcion, String tipo, String prioridad, String fechaLimite) {
+        String sql = "INSERT INTO tareas_practicante (id_doctor, id_practicante, titulo, descripcion, tipo, prioridad, fecha_limite) VALUES (?,?,?,?,?,?,?)";
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, idDoctor); ps.setInt(2, idPracticante); ps.setString(3, titulo);
+            ps.setString(4, descripcion); ps.setString(5, tipo != null ? tipo : "OTRO");
+            ps.setString(6, prioridad != null ? prioridad : "MEDIA");
+            ps.setDate(7, fechaLimite != null ? Date.valueOf(fechaLimite) : null);
+            ps.executeUpdate();
+            try (ResultSet keys = ps.getGeneratedKeys()) { if (keys.next()) return Map.of("id", keys.getInt(1)); }
+        } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+        return Map.of();
+    }
+
+    public List<Map<String, Object>> findTareasByPracticante(Integer idPracticante) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        String sql = "SELECT t.*, CONCAT(u.nombre,' ',u.apellido) AS doctor FROM tareas_practicante t " +
+                "JOIN doctores d ON t.id_doctor = d.id_doctor JOIN usuarios u ON d.id_usuario = u.id_usuario " +
+                "WHERE t.id_practicante = ? ORDER BY t.fecha_asignacion DESC";
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, idPracticante);
+            try (ResultSet rs = ps.executeQuery()) { while (rs.next()) list.add(mapTarea(rs)); }
+        } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+        return list;
+    }
+
+    public List<Map<String, Object>> findTareasByDoctor(Integer idDoctor) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        String sql = "SELECT t.*, CONCAT(u.nombre,' ',u.apellido) AS practicante FROM tareas_practicante t " +
+                "JOIN practicantes p ON t.id_practicante = p.id_practicante JOIN usuarios u ON p.id_usuario = u.id_usuario " +
+                "WHERE t.id_doctor = ? ORDER BY t.fecha_asignacion DESC";
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, idDoctor);
+            try (ResultSet rs = ps.executeQuery()) { while (rs.next()) list.add(mapTarea(rs)); }
+        } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+        return list;
+    }
+
+    public void updateTareaEstado(Integer id, String estado) {
+        String sql = "UPDATE tareas_practicante SET estado = ? WHERE id_tarea = ?";
+        try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, estado); ps.setInt(2, id); ps.executeUpdate();
+        } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+    }
+
+    private Map<String, Object> mapTarea(ResultSet rs) throws Exception {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("idTarea", rs.getInt("id_tarea"));
+        m.put("idDoctor", rs.getInt("id_doctor"));
+        m.put("idPracticante", rs.getInt("id_practicante"));
+        m.put("titulo", rs.getString("titulo"));
+        m.put("descripcion", rs.getString("descripcion"));
+        m.put("tipo", rs.getString("tipo"));
+        m.put("prioridad", rs.getString("prioridad"));
+        m.put("estado", rs.getString("estado"));
+        Timestamp fa = rs.getTimestamp("fecha_asignacion");
+        if (fa != null) m.put("fechaAsignacion", fa.toLocalDateTime().toString());
+        Date fl = rs.getDate("fecha_limite");
+        if (fl != null) m.put("fecha_limite", fl.toString());
+        try { m.put("doctor", rs.getString("doctor")); } catch (Exception ex) {}
+        try { m.put("practicante", rs.getString("practicante")); } catch (Exception ex) {}
+        return m;
     }
 }

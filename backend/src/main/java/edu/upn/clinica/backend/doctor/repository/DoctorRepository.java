@@ -97,7 +97,7 @@ public class DoctorRepository extends BaseRepository {
             "       d.bibliografia " +
             "FROM doctores d " +
             "JOIN usuarios u ON d.id_usuario = u.id_usuario " +
-            "WHERE u.estado = 'ACTIVO' " +
+            "WHERE u.estado = 'ACTIVO' AND u.rol IN ('DOCTOR', 'MEDICO') AND d.destacado = TRUE " +
             "ORDER BY u.nombre";
 
         List<DoctorDisponibleDTO> lista = new ArrayList<>();
@@ -146,9 +146,10 @@ public class DoctorRepository extends BaseRepository {
     public List<DoctorDTO> findAllAdmin() {
         String sql =
             "SELECT d.id_doctor, u.nombre, u.apellido, u.email, " +
-            "       d.especialidad, d.CMP, d.foto_url, u.telefono, u.estado " +
+            "       d.especialidad, d.CMP, d.foto_url, u.telefono, u.estado, d.destacado " +
             "FROM doctores d " +
             "JOIN usuarios u ON d.id_usuario = u.id_usuario " +
+            "WHERE u.rol IN ('DOCTOR', 'MEDICO') " +
             "ORDER BY u.nombre, u.apellido";
 
         List<DoctorDTO> lista = new ArrayList<>();
@@ -166,6 +167,7 @@ public class DoctorRepository extends BaseRepository {
                 dto.setFotoUrl(rs.getString("foto_url"));
                 dto.setTelefono(rs.getString("telefono"));
                 dto.setEstado(rs.getString("estado"));
+                dto.setDestacado(rs.getBoolean("destacado"));
                 lista.add(dto);
             }
         } catch (Exception e) {
@@ -344,6 +346,38 @@ public class DoctorRepository extends BaseRepository {
             conn.commit();
         } catch (Exception e) {
             throw new RuntimeException("Error eliminando doctor: " + e.getMessage());
+        }
+    }
+
+    public void reactivateById(Integer idDoctor) {
+        String sqlFind = "SELECT id_usuario FROM doctores WHERE id_doctor = ?";
+        String sqlEstado = "UPDATE usuarios SET estado = 'ACTIVO' WHERE id_usuario = ?";
+        try (Connection conn = getConnection()) {
+            conn.setAutoCommit(false);
+            try (PreparedStatement ps = conn.prepareStatement(sqlFind)) {
+                ps.setInt(1, idDoctor);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) throw new SQLException("Doctor no encontrado: " + idDoctor);
+                    int idUsuario = rs.getInt("id_usuario");
+                    try (PreparedStatement ps2 = conn.prepareStatement(sqlEstado)) {
+                        ps2.setInt(1, idUsuario);
+                        ps2.executeUpdate();
+                    }
+                }
+            }
+            conn.commit();
+        } catch (Exception e) {
+            throw new RuntimeException("Error reactivando doctor: " + e.getMessage());
+        }
+    }
+
+    public void toggleDestacado(Integer idDoctor) {
+        String sql = "UPDATE doctores SET destacado = NOT destacado WHERE id_doctor = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idDoctor);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            throw new RuntimeException("Error toggle destacado: " + e.getMessage());
         }
     }
 }

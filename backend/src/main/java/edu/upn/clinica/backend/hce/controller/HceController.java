@@ -38,6 +38,8 @@ public class HceController {
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR") || a.getAuthority().equals("ROLE_DIRECTOR"));
         boolean isDoctor = authorities.stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_DOCTOR"));
+        boolean isPracticante = authorities.stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_PRACTICANTE"));
         if (isAdmin) {
             return ResponseEntity.ok(ApiResponse.ok("Historial",
                     hceService.listarTodos()));
@@ -45,6 +47,10 @@ public class HceController {
         if (isDoctor) {
             return ResponseEntity.ok(ApiResponse.ok("Historial",
                     hceService.listarPorDoctorEmail(email)));
+        }
+        if (isPracticante) {
+            return ResponseEntity.ok(ApiResponse.ok("Historial",
+                    hceService.listarPorPracticanteEmail(email)));
         }
         return ResponseEntity.ok(ApiResponse.ok("Historial",
                 hceService.listarPorEmail(email)));

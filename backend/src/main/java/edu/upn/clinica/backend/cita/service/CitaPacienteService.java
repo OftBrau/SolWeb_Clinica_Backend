@@ -80,7 +80,7 @@ public class CitaPacienteService {
         return new CitaPublicaResponse(
                 c.getIdCita(), nombrePaciente, doctor.getNombre(),
                 doctor.getEspecialidad(), c.getFecha().toString(),
-                c.getHora().toString(), c.getEstado(), c.getTipo()
+                c.getHora().toString(), c.getEstado(), c.getTipo(), null, c.getConsultorio()
         );
     }
 }

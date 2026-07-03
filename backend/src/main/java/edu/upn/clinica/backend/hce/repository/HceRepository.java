@@ -111,4 +111,27 @@ public class HceRepository extends BaseRepository {
         h.setEspecialidad(rs.getString("especialidad"));
         return h;
     }
+
+    public List<HistorialItem> findByPracticante(Integer idPracticante) {
+        String sql = "SELECT c.id_consulta, NULL AS id_paciente, " +
+                "CONCAT(pu.nombre,' ',pu.apellido) AS nombre_paciente, " +
+                "'-' AS codigo_estudiante, ct.fecha, " +
+                "c.diagnostico_cie10, c.descripcion_diagnostico AS descripcion_diag, " +
+                "c.tratamiento, c.prescripcion, " +
+                "CONCAT(du.nombre,' ',du.apellido) AS nombre_doctor, " +
+                "d.especialidad " +
+                "FROM consultas c " +
+                "JOIN citas ct ON ct.id_cita = c.id_cita " +
+                "JOIN practicantes pr ON pr.id_practicante = c.id_practicante " +
+                "JOIN usuarios pu ON pu.id_usuario = pr.id_usuario " +
+                "JOIN doctores d ON d.id_doctor = c.id_doctor " +
+                "JOIN usuarios du ON du.id_usuario = d.id_usuario " +
+                "WHERE c.id_practicante = ? ORDER BY ct.fecha DESC";
+        List<HistorialItem> list = new ArrayList<>();
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idPracticante);
+            try (ResultSet rs = ps.executeQuery()) { while (rs.next()) list.add(mapRow(rs)); }
+        } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+        return list;
+    }
 }

@@ -53,8 +53,6 @@ public class ConsultaService {
 
         Consulta guardada = consultaRepository.save(c);
 
-        citaRepository.marcarAtendida(req.getIdCita());
-
         pacienteRepository.findById(cita.getIdPaciente())
                 .map(Paciente::getEmail)
                 .ifPresent(email -> {
