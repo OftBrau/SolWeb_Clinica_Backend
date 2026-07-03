@@ -132,7 +132,7 @@ public class CitaRepository extends BaseRepository {
 
     // --- Listar citas por doctor y fecha (agenda) ---
     public List<Cita> findByDoctorAndFecha(Integer idDoctor, LocalDate fecha) {
-        String sql = SELECT_BASE + "WHERE c.id_doctor = ? AND c.fecha = ? ORDER BY c.hora";
+        String sql = SELECT_BASE + "WHERE c.id_doctor = ? AND c.fecha = ? AND c.estado != 'ATENDIDA' ORDER BY c.hora";
         return query(sql, idDoctor, Date.valueOf(fecha));
     }
 

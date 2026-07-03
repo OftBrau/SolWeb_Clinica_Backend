@@ -186,6 +186,9 @@ public class PracticanteService {
         a.setIdCita(request.getIdCita());
         a.setIdTeleconsulta(request.getIdTeleconsulta());
         a = practicanteRepository.crearActividad(a);
+        // También crear tarea en el sistema Kanban
+        practicanteRepository.saveTarea(idSupervisor, request.getIdPracticante(), request.getTitulo(),
+                request.getDescripcion(), request.getTipo(), "MEDIA", request.getFecha() != null ? request.getFecha().toString() : null);
         return toActividadDTO(a);
     }
 
