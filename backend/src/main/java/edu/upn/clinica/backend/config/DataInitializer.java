@@ -50,6 +50,7 @@ public class DataInitializer implements CommandLineRunner {
         saveTemplate(doc1.getIdDoctor(), "VIERNES", "08:00", "14:00");
 
         saveTemplate(doc2.getIdDoctor(), "LUNES", "08:00", "17:00");
+        saveTemplate(doc2.getIdDoctor(), "MARTES", "08:00", "17:00");
         saveTemplate(doc2.getIdDoctor(), "MIERCOLES", "08:00", "17:00");
         saveTemplate(doc2.getIdDoctor(), "VIERNES", "08:00", "17:00");
 

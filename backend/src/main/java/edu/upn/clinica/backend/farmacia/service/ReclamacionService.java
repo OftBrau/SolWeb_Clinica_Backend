@@ -40,6 +40,9 @@ public class ReclamacionService {
         Reclamacion r = new Reclamacion();
         r.setIdPaciente(idPaciente);
         r.setNombreCompleto(request.getNombreCompleto());
+        r.setApellidos(request.getApellidos());
+        r.setDni(request.getDni());
+        r.setDireccion(request.getDireccion());
         r.setEmail(request.getEmail());
         r.setTelefono(request.getTelefono());
         r.setTipo(request.getTipo().toUpperCase());
@@ -52,6 +55,9 @@ public class ReclamacionService {
     public ReclamacionDTO crearAnonimo(CrearReclamacionRequest request) {
         Reclamacion r = new Reclamacion();
         r.setNombreCompleto(request.getNombreCompleto());
+        r.setApellidos(request.getApellidos());
+        r.setDni(request.getDni());
+        r.setDireccion(request.getDireccion());
         r.setEmail(request.getEmail());
         r.setTelefono(request.getTelefono());
         r.setTipo(request.getTipo().toUpperCase());
@@ -75,6 +81,9 @@ public class ReclamacionService {
         d.setIdReclamacion(r.getIdReclamacion());
         d.setIdPaciente(r.getIdPaciente());
         d.setNombreCompleto(r.getNombreCompleto());
+        d.setApellidos(r.getApellidos());
+        d.setDni(r.getDni());
+        d.setDireccion(r.getDireccion());
         d.setEmail(r.getEmail());
         d.setTelefono(r.getTelefono());
         d.setTipo(r.getTipo());

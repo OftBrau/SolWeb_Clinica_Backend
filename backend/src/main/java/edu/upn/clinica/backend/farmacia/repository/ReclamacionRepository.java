@@ -13,8 +13,8 @@ import java.util.Optional;
 public class ReclamacionRepository extends BaseRepository {
 
     private static final String SELECT_BASE
-            = "SELECT id_reclamacion, id_paciente, nombre_completo, email, telefono, "
-            + "tipo, descripcion, producto_servicio, estado, respuesta, "
+            = "SELECT id_reclamacion, id_paciente, nombre_completo, apellidos, dni, direccion, "
+            + "email, telefono, tipo, descripcion, producto_servicio, estado, respuesta, "
             + "fecha_creacion, fecha_respuesta FROM reclamaciones ";
 
     public List<Reclamacion> findAll(int page, int size) {
@@ -69,18 +69,21 @@ public class ReclamacionRepository extends BaseRepository {
     }
 
     public Reclamacion save(Reclamacion r) {
-        String sql = "INSERT INTO reclamaciones (id_paciente, nombre_completo, email, telefono, "
-                + "tipo, descripcion, producto_servicio) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO reclamaciones (id_paciente, nombre_completo, apellidos, dni, direccion, "
+                + "email, telefono, tipo, descripcion, producto_servicio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             if (r.getIdPaciente() != null) ps.setInt(1, r.getIdPaciente());
             else ps.setNull(1, Types.INTEGER);
             ps.setString(2, r.getNombreCompleto());
-            ps.setString(3, r.getEmail());
-            ps.setString(4, r.getTelefono());
-            ps.setString(5, r.getTipo());
-            ps.setString(6, r.getDescripcion());
-            ps.setString(7, r.getProductoServicio());
+            ps.setString(3, r.getApellidos());
+            ps.setString(4, r.getDni());
+            ps.setString(5, r.getDireccion());
+            ps.setString(6, r.getEmail());
+            ps.setString(7, r.getTelefono());
+            ps.setString(8, r.getTipo());
+            ps.setString(9, r.getDescripcion());
+            ps.setString(10, r.getProductoServicio());
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) r.setIdReclamacion(keys.getInt(1));
@@ -109,6 +112,9 @@ public class ReclamacionRepository extends BaseRepository {
         r.setIdReclamacion(rs.getInt("id_reclamacion"));
         r.setIdPaciente(rs.getObject("id_paciente") != null ? rs.getInt("id_paciente") : null);
         r.setNombreCompleto(rs.getString("nombre_completo"));
+        r.setApellidos(rs.getString("apellidos"));
+        r.setDni(rs.getString("dni"));
+        r.setDireccion(rs.getString("direccion"));
         r.setEmail(rs.getString("email"));
         r.setTelefono(rs.getString("telefono"));
         r.setTipo(rs.getString("tipo"));
