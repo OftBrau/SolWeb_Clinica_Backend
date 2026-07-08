@@ -169,8 +169,8 @@ public class PracticanteRepository extends BaseRepository {
             "       up.nombre AS nombre_usuario, up.apellido AS apellido_usuario, up.email AS email_usuario, " +
             "       us.nombre AS nombre_doctor, us.apellido AS apellido_doctor " +
             "FROM supervision_practicantes sp " +
-            "JOIN practicantes p ON sp.id_practicante = p.id_practicante " +
-            "JOIN usuarios up ON p.id_usuario = up.id_usuario " +
+            "JOIN doctores dp ON sp.id_practicante = dp.id_doctor " +
+            "JOIN usuarios up ON dp.id_usuario = up.id_usuario " +
             "JOIN doctores ds ON sp.id_supervisor = ds.id_doctor " +
             "JOIN usuarios us ON ds.id_usuario = us.id_usuario " +
             "WHERE sp.id_supervisor = ? " +
@@ -402,7 +402,7 @@ public class PracticanteRepository extends BaseRepository {
     public List<java.util.Map<String, Object>> findInvitacionesByDoctor(Integer idDoctor) {
         List<java.util.Map<String, Object>> list = new ArrayList<>();
         String sql = "SELECT i.*, CONCAT(u.nombre,' ',u.apellido) AS practicante FROM invitaciones_practicante i " +
-                "JOIN practicantes p ON i.id_practicante = p.id_practicante JOIN usuarios u ON p.id_usuario = u.id_usuario " +
+                "JOIN doctores dp ON i.id_practicante = dp.id_doctor JOIN usuarios u ON dp.id_usuario = u.id_usuario " +
                 "WHERE i.id_doctor = ? ORDER BY i.fecha_creacion DESC";
         try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, idDoctor);
@@ -423,7 +423,7 @@ public class PracticanteRepository extends BaseRepository {
                 "CONCAT(pu.nombre,' ',pu.apellido) AS practicante, d.especialidad " +
                 "FROM invitaciones_practicante i " +
                 "JOIN doctores d ON i.id_doctor = d.id_doctor JOIN usuarios du ON d.id_usuario = du.id_usuario " +
-                "JOIN practicantes p ON i.id_practicante = p.id_practicante JOIN usuarios pu ON p.id_usuario = pu.id_usuario " +
+                "JOIN doctores dp ON i.id_practicante = dp.id_doctor JOIN usuarios pu ON dp.id_usuario = pu.id_usuario " +
                 "WHERE i.id_invitacion = ?";
         try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, id);
@@ -485,7 +485,7 @@ public class PracticanteRepository extends BaseRepository {
     public List<Map<String, Object>> findTareasByDoctor(Integer idDoctor) {
         List<Map<String, Object>> list = new ArrayList<>();
         String sql = "SELECT t.*, CONCAT(u.nombre,' ',u.apellido) AS practicante FROM tareas_practicante t " +
-                "JOIN practicantes p ON t.id_practicante = p.id_practicante JOIN usuarios u ON p.id_usuario = u.id_usuario " +
+                "JOIN doctores dp ON t.id_practicante = dp.id_doctor JOIN usuarios u ON dp.id_usuario = u.id_usuario " +
                 "WHERE t.id_doctor = ? ORDER BY t.fecha_asignacion DESC";
         try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, idDoctor);

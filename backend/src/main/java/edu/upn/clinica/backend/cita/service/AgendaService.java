@@ -40,8 +40,10 @@ public class AgendaService {
                 .map(p -> p.getNombre() + " " + p.getApellido())
                 .orElse("Paciente #" + c.getIdPaciente());
 
-        DoctorDisponibleDTO doc = doctorRepository.findById(c.getIdDoctor())
-                .orElse(new DoctorDisponibleDTO(c.getIdDoctor(), "Desconocido", ""));
+        DoctorDisponibleDTO doc = c.getIdDoctor() != null
+                ? doctorRepository.findById(c.getIdDoctor())
+                    .orElse(new DoctorDisponibleDTO(c.getIdDoctor(), "Desconocido", ""))
+                : new DoctorDisponibleDTO(0, "Sin asignar", "");
 
         AgendaItemResponse r = new AgendaItemResponse();
         r.setIdCita(c.getIdCita());

@@ -128,4 +128,30 @@ public class DoctorController {
         doctorService.eliminarDisponibilidad(id);
         return ResponseEntity.ok(ApiResponse.ok("Disponibilidad eliminada"));
     }
+
+    @GetMapping("/me/equipo")
+    @Operation(summary = "Ver equipo del doctor autenticado (enfermeros y practicantes)")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> miEquipo(Authentication auth) {
+        String email = auth.getName();
+        Integer idDoctor;
+        try {
+            String sql = "SELECT d.id_doctor FROM doctores d JOIN usuarios u ON d.id_usuario = u.id_usuario WHERE u.email = ?";
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, email);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        idDoctor = rs.getInt("id_doctor");
+                    } else {
+                        throw new AppException("Doctor no encontrado", HttpStatus.NOT_FOUND);
+                    }
+                }
+            }
+        } catch (AppException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+        return ResponseEntity.ok(ApiResponse.ok("Equipo obtenido", doctorService.obtenerEquipo(idDoctor)));
+    }
 }

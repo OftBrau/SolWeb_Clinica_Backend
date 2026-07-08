@@ -104,8 +104,10 @@ public class BookingService {
         }
         return appointments.stream().map(a -> {
             AppointmentDTO dto = new AppointmentDTO(a);
-            doctorRepository.findById(a.getDoctorId()).ifPresent(d ->
-                    dto.setDoctorName(d.getNombre()));
+            if (a.getDoctorId() != null) {
+                doctorRepository.findById(a.getDoctorId()).ifPresent(d ->
+                        dto.setDoctorName(d.getNombre()));
+            }
             return dto;
         }).toList();
     }
@@ -121,13 +123,13 @@ public class BookingService {
                     HttpStatus.FORBIDDEN);
         }
 
-        if (!"SCHEDULED".equals(a.getStatus())) {
-            throw new AppException("Solo puedes cancelar citas en estado SCHEDULED", HttpStatus.BAD_REQUEST);
+        if (!"SCHEDULED".equals(a.getStatus()) && !"CONFIRMADA".equals(a.getStatus())
+                && !"PENDIENTE_ASIGNACION".equals(a.getStatus())) {
+            throw new AppException("Solo puedes cancelar citas activas", HttpStatus.BAD_REQUEST);
         }
 
-        LocalDate now = LocalDate.now(ClinicConstants.TIMEZONE);
-        if (a.getDate().minusDays(1).isBefore(now)) {
-            throw new AppException("Solo puedes cancelar citas con al menos 24 horas de anticipación",
+        if (a.getDate().isBefore(LocalDate.now(ClinicConstants.TIMEZONE))) {
+            throw new AppException("Solo puedes cancelar citas de fechas futuras",
                     HttpStatus.BAD_REQUEST);
         }
 
@@ -142,8 +144,10 @@ public class BookingService {
     public List<AppointmentDTO> getDoctorAppointments(Integer doctorId, LocalDate from, LocalDate to) {
         return appointmentRepository.findByDoctorIdAndDateBetweenOrderByDateAscStartTimeAsc(doctorId, from, to).stream().map(a -> {
             AppointmentDTO dto = new AppointmentDTO(a);
-            doctorRepository.findById(a.getDoctorId()).ifPresent(d ->
-                    dto.setDoctorName(d.getNombre()));
+            if (a.getDoctorId() != null) {
+                doctorRepository.findById(a.getDoctorId()).ifPresent(d ->
+                        dto.setDoctorName(d.getNombre()));
+            }
             return dto;
         }).toList();
     }

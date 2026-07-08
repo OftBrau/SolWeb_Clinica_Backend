@@ -7,6 +7,8 @@ import edu.upn.clinica.backend.cita.repository.CitaRepository;
 import edu.upn.clinica.backend.consultorio.repository.ConsultorioRepository;
 import edu.upn.clinica.backend.doctor.dto.DoctorDisponibleDTO;
 import edu.upn.clinica.backend.doctor.repository.DoctorRepository;
+import edu.upn.clinica.backend.especialidad.model.Especialidad;
+import edu.upn.clinica.backend.especialidad.repository.EspecialidadRepository;
 import edu.upn.clinica.backend.paciente.model.Paciente;
 import edu.upn.clinica.backend.paciente.repository.PacienteRepository;
 import edu.upn.clinica.backend.shared.AppException;
@@ -24,6 +26,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 // ============================================================
@@ -52,12 +55,15 @@ public class CitaPublicaService {
     @Autowired
     private ConsultorioRepository consultorioRepository;
 
+    @Autowired
+    private EspecialidadRepository especialidadRepository;
+
     // ─── 1. Buscar paciente existente ───────────────────────
-    public Paciente buscarPaciente(String email, String codigoEstudiante) {
+    public Paciente buscarPaciente(String email) {
         return pacienteRepository
-                .findByEmailAndCodigo(email, codigoEstudiante)
+                .findByEmail(email)
                 .orElseThrow(() -> new AppException(
-                "No encontramos tus datos. Verifica el correo y código.",
+                "No encontramos tus datos. Verifica el correo.",
                 HttpStatus.NOT_FOUND));
     }
 
@@ -236,5 +242,145 @@ public class CitaPublicaService {
 
         // Retorna id + password en claro para enviarlo por correo
         return new String[]{guardado.getIdPaciente().toString(), passwordFinal};
+    }
+
+    public CitaPublicaResponse reservarBasicaPublica(Map<String, Object> body) {
+        Integer idPaciente = resolverOPaciente(body);
+        LocalDate fecha = LocalDate.parse((String) body.get("fecha"));
+        LocalTime hora = LocalTime.parse((String) body.get("hora"));
+        String motivo = (String) body.getOrDefault("motivo", "Consulta general");
+        String tipo = (String) body.getOrDefault("tipo", "PRESENCIAL");
+
+        DoctorDisponibleDTO doctor = encontrarMedicinaGeneralDisponible(fecha, hora);
+        Cita cita = new Cita();
+        cita.setIdPaciente(idPaciente);
+        cita.setIdDoctor(doctor.getIdDoctor());
+        cita.setFecha(fecha);
+        cita.setHora(hora);
+        cita.setEstado("CONFIRMADA");
+        cita.setTipo(tipo);
+        cita.setMotivo(motivo);
+        cita.setTipoReserva("BASICA");
+        cita = citaRepository.save(cita);
+
+        String nombrePaciente = "Paciente #" + idPaciente;
+        messaging.convertAndSend("/topic/notificaciones/doctor",
+                new NotificacionDTO("NUEVA_CITA",
+                        "Nueva cita basica agendada: " + nombrePaciente,
+                        cita.getIdCita()));
+
+        return buildBasicaResponse(cita, doctor);
+    }
+
+    public CitaPublicaResponse reservarEspecialistaPublica(Map<String, Object> body) {
+        Integer idPaciente = resolverOPaciente(body);
+        Integer idEspecialidad = ((Number) body.get("idEspecialidad")).intValue();
+        LocalDate fecha = LocalDate.parse((String) body.get("fecha"));
+        LocalTime hora = LocalTime.parse((String) body.get("hora"));
+        String motivo = (String) body.getOrDefault("motivo", "Consulta con especialista");
+        String tipo = (String) body.getOrDefault("tipo", "PRESENCIAL");
+
+        Especialidad esp = especialidadRepository.findById(idEspecialidad)
+                .orElseThrow(() -> new AppException("Especialidad no encontrada", HttpStatus.NOT_FOUND));
+
+        Cita cita = new Cita();
+        cita.setIdPaciente(idPaciente);
+        cita.setFecha(fecha);
+        cita.setHora(hora);
+        cita.setTipo(tipo);
+        cita.setMotivo(motivo);
+        cita.setTipoReserva("ESPECIALISTA");
+        cita.setIdEspecialidad(idEspecialidad);
+        cita.setMontoExtra(esp.getCostoExtra());
+
+        Object idDoctorPreferido = body.get("idDoctorPreferido");
+        if (idDoctorPreferido != null) {
+            int idDoc = ((Number) idDoctorPreferido).intValue();
+            if (!citaRepository.existeConflicto(idDoc, fecha, hora)) {
+                cita.setIdDoctor(idDoc);
+                cita.setEstado("CONFIRMADA");
+            } else {
+                cita.setEstado("PENDIENTE_ASIGNACION");
+            }
+        } else {
+            cita.setEstado("PENDIENTE_ASIGNACION");
+        }
+        cita = citaRepository.save(cita);
+
+        String nombrePaciente = "Paciente #" + idPaciente;
+        messaging.convertAndSend("/topic/notificaciones/asistente",
+                new NotificacionDTO("NUEVA_CITA_ESPECIALISTA",
+                        "Nueva solicitud de cita con especialista: " + esp.getNombre(),
+                        cita.getIdCita()));
+
+        CitaPublicaResponse resp = new CitaPublicaResponse();
+        resp.setIdCita(cita.getIdCita());
+        resp.setIdPaciente(idPaciente);
+        resp.setPaciente(nombrePaciente);
+        resp.setFecha(fecha.toString());
+        resp.setHora(hora.toString());
+        resp.setEstado("PENDIENTE_ASIGNACION");
+        resp.setTipo(tipo);
+        resp.setTipoReserva("ESPECIALISTA");
+        resp.setMontoExtra(esp.getCostoExtra());
+        resp.setEspecialidad(esp.getNombre());
+        return resp;
+    }
+
+    private Integer resolverOPaciente(Map<String, Object> body) {
+        Object idPacObj = body.get("idPaciente");
+        if (idPacObj != null) {
+            return ((Number) idPacObj).intValue();
+        }
+        String email = (String) body.get("email");
+        if (email == null) {
+            throw new AppException("Se requiere email o idPaciente", HttpStatus.BAD_REQUEST);
+        }
+        if (pacienteRepository.existsByEmail(email)) {
+            return pacienteRepository.findByEmail(email).get().getIdPaciente();
+        }
+        Paciente nuevo = new Paciente();
+        nuevo.setNombre((String) body.getOrDefault("nombre", ""));
+        nuevo.setApellido((String) body.getOrDefault("apellido", ""));
+        nuevo.setEmail(email);
+        nuevo.setTelefono((String) body.get("telefono"));
+        String passwordFinal = UUID.randomUUID().toString().substring(0, 8);
+        nuevo.setPasswordHash(passwordEncoder.encode(passwordFinal));
+        nuevo.setCodigoEstudiante(email.split("@")[0]);
+        String fechaNac = (String) body.get("fechaNacimiento");
+        nuevo.setFechaNacimiento(fechaNac != null && !fechaNac.isBlank()
+                ? LocalDate.parse(fechaNac) : LocalDate.of(2000, 1, 1));
+        nuevo.setGenero((String) body.getOrDefault("genero", "OTRO"));
+        nuevo.setEstado("ACTIVO");
+        Paciente guardado = pacienteRepository.save(nuevo);
+        emailService.enviarCredenciales(email, nuevo.getNombre(), passwordFinal);
+        return guardado.getIdPaciente();
+    }
+
+    private DoctorDisponibleDTO encontrarMedicinaGeneralDisponible(LocalDate fecha, LocalTime hora) {
+        List<Integer> ids = consultorioRepository.findDoctoresMedicinaGeneralActivos();
+        for (Integer idDoctor : ids) {
+            if (!citaRepository.existeConflicto(idDoctor, fecha, hora)) {
+                return doctorRepository.findById(idDoctor)
+                        .orElseThrow(() -> new AppException("No se encontro doctor disponible", HttpStatus.NOT_FOUND));
+            }
+        }
+        throw new AppException("No hay medicos de Medicina General disponibles en ese horario", HttpStatus.NOT_FOUND);
+    }
+
+    private CitaPublicaResponse buildBasicaResponse(Cita cita, DoctorDisponibleDTO doctor) {
+        CitaPublicaResponse resp = new CitaPublicaResponse();
+        resp.setIdCita(cita.getIdCita());
+        resp.setIdPaciente(cita.getIdPaciente());
+        resp.setIdDoctor(doctor.getIdDoctor());
+        resp.setDoctor(doctor.getNombre());
+        resp.setEspecialidad(doctor.getEspecialidad());
+        resp.setPaciente("Paciente #" + cita.getIdPaciente());
+        resp.setFecha(cita.getFecha().toString());
+        resp.setHora(cita.getHora().toString());
+        resp.setEstado(cita.getEstado());
+        resp.setTipo(cita.getTipo());
+        resp.setTipoReserva("BASICA");
+        return resp;
     }
 }

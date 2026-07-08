@@ -16,6 +16,8 @@ public final class AppConstants {
     public static final String ROL_ADMINISTRATIVO = "ADMINISTRATIVO";
     public static final String ROL_ADMINISTRADOR  = "ADMINISTRADOR";
     public static final String ROL_DIRECTOR       = "DIRECTOR";
+    public static final String ROL_ASISTENTE      = "ASISTENTE";
+    public static final String ROL_ENFERMERO      = "ENFERMERO";
 
     // --- Estados de cita ---
     public static final String CITA_CONFIRMADA    = "CONFIRMADA";
@@ -23,10 +25,14 @@ public final class AppConstants {
     public static final String CITA_ATENDIDA      = "ATENDIDA";
     public static final String CITA_CANCELADA     = "CANCELADA";
     public static final String CITA_NO_ASISTIO    = "NO_ASISTIO";
+    public static final String CITA_PENDIENTE_ASIGNACION = "PENDIENTE_ASIGNACION";
 
     // --- Tipos de cita ---
     public static final String TIPO_PRESENCIAL    = "PRESENCIAL";
     public static final String TIPO_TELECONSULTA  = "TELECONSULTA";
+
+    public static final String RESERVA_BASICA       = "BASICA";
+    public static final String RESERVA_ESPECIALISTA = "ESPECIALISTA";
 
     // --- Estados de usuario ---
     public static final String USUARIO_ACTIVO     = "ACTIVO";

@@ -8,7 +8,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.sql.DataSource;
 import java.security.SecureRandom;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.Base64;
 import java.util.List;
 
@@ -24,6 +27,9 @@ public class UsuarioService {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private DataSource dataSource;
+
     private static final SecureRandom RANDOM = new SecureRandom();
 
     public PageResult<UsuarioDTO> listar(int page, int size) {
@@ -35,10 +41,11 @@ public class UsuarioService {
 
     public UsuarioDTO crear(CrearUsuarioRequest request) {
         if (usuarioRepository.existsByEmail(request.getEmail())) {
-            throw new AppException("El email ya está registrado", HttpStatus.CONFLICT);
+            throw new AppException("El email ya esta registrado", HttpStatus.CONFLICT);
         }
 
-        String passwordTemp = generarPasswordTemporal();
+        boolean manualPassword = request.getPassword() != null && !request.getPassword().isBlank();
+        String passwordTemp = manualPassword ? request.getPassword() : generarPasswordTemporal();
         String hash = passwordEncoder.encode(passwordTemp);
 
         Usuario usuario = new Usuario();
@@ -49,8 +56,21 @@ public class UsuarioService {
         usuario.setTelefono(request.getTelefono());
         usuario.setRol(request.getRol());
         usuario.setEstado("ACTIVO");
+        usuario.setPasswordDefault(!manualPassword);
 
         usuario = usuarioRepository.save(usuario);
+
+        if ("ENFERMERO".equals(request.getRol())) {
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(
+                     "INSERT IGNORE INTO doctores (id_usuario, especialidad, CMP) VALUES (?, 'Enfermeria', ?)")) {
+                ps.setInt(1, usuario.getId());
+                ps.setString(2, "ENF-" + String.format("%06d", usuario.getId()));
+                ps.executeUpdate();
+            } catch (Exception e) {
+                throw new RuntimeException("Error creando entrada doctores para enfermero: " + e.getMessage());
+            }
+        }
 
         emailService.enviarCredenciales(
                 usuario.getEmail(),
@@ -76,7 +96,7 @@ public class UsuarioService {
                 .orElseThrow(() -> new AppException("Usuario no encontrado", HttpStatus.NOT_FOUND));
 
         if (!"ACTIVO".equals(estado) && !"INACTIVO".equals(estado)) {
-            throw new AppException("Estado inválido. Use ACTIVO o INACTIVO");
+            throw new AppException("Estado invalido. Use ACTIVO o INACTIVO");
         }
 
         usuarioRepository.updateEstado(id, estado);
@@ -86,6 +106,18 @@ public class UsuarioService {
         usuarioRepository.findById(id)
                 .orElseThrow(() -> new AppException("Usuario no encontrado", HttpStatus.NOT_FOUND));
         usuarioRepository.updateRol(id, rol);
+
+        if ("ENFERMERO".equals(rol)) {
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(
+                     "INSERT IGNORE INTO doctores (id_usuario, especialidad, CMP) VALUES (?, 'Enfermeria', ?)")) {
+                ps.setInt(1, id);
+                ps.setString(2, "ENF-" + String.format("%06d", id));
+                ps.executeUpdate();
+            } catch (Exception e) {
+                System.err.println("Error creando doctores para enfermero: " + e.getMessage());
+            }
+        }
     }
 
     private String generarPasswordTemporal() {

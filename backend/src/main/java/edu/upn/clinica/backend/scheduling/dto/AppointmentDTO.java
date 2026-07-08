@@ -2,6 +2,8 @@ package edu.upn.clinica.backend.scheduling.dto;
 
 import edu.upn.clinica.backend.scheduling.model.ScheduleAppointment;
 
+import java.math.BigDecimal;
+
 public class AppointmentDTO {
     private Integer id;
     private Integer doctorId;
@@ -14,6 +16,11 @@ public class AppointmentDTO {
     private String status;
     private String notes;
     private String createdAt;
+    private String tipoReserva;
+    private BigDecimal montoExtra;
+    private String tipo;
+    private String motivo;
+    private Integer idEspecialidad;
 
     public AppointmentDTO() {}
 
@@ -27,6 +34,11 @@ public class AppointmentDTO {
         this.status = a.getStatus();
         this.notes = a.getNotes();
         this.createdAt = a.getCreatedAt() != null ? a.getCreatedAt().toString() : null;
+        this.tipoReserva = a.getTipoReserva();
+        this.montoExtra = a.getMontoExtra();
+        this.tipo = a.getTipo();
+        this.motivo = a.getMotivo();
+        this.idEspecialidad = a.getIdEspecialidad();
     }
 
     public Integer getId() { return id; }
@@ -61,4 +73,19 @@ public class AppointmentDTO {
 
     public String getCreatedAt() { return createdAt; }
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+
+    public String getTipoReserva() { return tipoReserva; }
+    public void setTipoReserva(String tipoReserva) { this.tipoReserva = tipoReserva; }
+
+    public BigDecimal getMontoExtra() { return montoExtra; }
+    public void setMontoExtra(BigDecimal montoExtra) { this.montoExtra = montoExtra; }
+
+    public String getTipo() { return tipo; }
+    public void setTipo(String tipo) { this.tipo = tipo; }
+
+    public String getMotivo() { return motivo; }
+    public void setMotivo(String motivo) { this.motivo = motivo; }
+
+    public Integer getIdEspecialidad() { return idEspecialidad; }
+    public void setIdEspecialidad(Integer idEspecialidad) { this.idEspecialidad = idEspecialidad; }
 }

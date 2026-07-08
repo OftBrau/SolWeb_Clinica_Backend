@@ -17,7 +17,7 @@ public class ScheduleAppointment {
     @Column(name = "id_paciente", nullable = false)
     private Integer patientId;
 
-    @Column(name = "id_doctor", nullable = false)
+    @Column(name = "id_doctor")
     private Integer doctorId;
 
     @Column(name = "fecha", nullable = false)
@@ -43,6 +43,21 @@ public class ScheduleAppointment {
 
     @Column(name = "motivo", nullable = false, columnDefinition = "TEXT")
     private String motivo = "";
+
+    @Column(name = "tipo_reserva", length = 20, insertable = false, updatable = false)
+    private String tipoReserva;
+
+    @Column(name = "id_especialidad", insertable = false, updatable = false)
+    private Integer idEspecialidad;
+
+    @Column(name = "id_asistente", insertable = false, updatable = false)
+    private Integer idAsistente;
+
+    @Column(name = "id_enfermero", insertable = false, updatable = false)
+    private Integer idEnfermero;
+
+    @Column(name = "monto_extra", insertable = false, updatable = false)
+    private java.math.BigDecimal montoExtra;
 
     public ScheduleAppointment() {}
 
@@ -83,4 +98,19 @@ public class ScheduleAppointment {
 
     public String getMotivo() { return motivo; }
     public void setMotivo(String motivo) { this.motivo = motivo; }
+
+    public String getTipoReserva() { return tipoReserva; }
+    public void setTipoReserva(String tipoReserva) { this.tipoReserva = tipoReserva; }
+
+    public Integer getIdEspecialidad() { return idEspecialidad; }
+    public void setIdEspecialidad(Integer idEspecialidad) { this.idEspecialidad = idEspecialidad; }
+
+    public Integer getIdAsistente() { return idAsistente; }
+    public void setIdAsistente(Integer idAsistente) { this.idAsistente = idAsistente; }
+
+    public Integer getIdEnfermero() { return idEnfermero; }
+    public void setIdEnfermero(Integer idEnfermero) { this.idEnfermero = idEnfermero; }
+
+    public java.math.BigDecimal getMontoExtra() { return montoExtra; }
+    public void setMontoExtra(java.math.BigDecimal montoExtra) { this.montoExtra = montoExtra; }
 }

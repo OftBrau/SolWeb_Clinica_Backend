@@ -69,8 +69,9 @@ public class AuthService {
         }
 
         String role = request.getRole().toUpperCase();
-        if (!"DOCTOR".equals(role) && !"PACIENTE".equals(role)) {
-            throw new AppException("Rol inválido. Use DOCTOR o PACIENTE", HttpStatus.BAD_REQUEST);
+        if (!"DOCTOR".equals(role) && !"PACIENTE".equals(role)
+                && !"ENFERMERO".equals(role) && !"ASISTENTE".equals(role)) {
+            throw new AppException("Rol invalido. Use DOCTOR, PACIENTE, ENFERMERO o ASISTENTE", HttpStatus.BAD_REQUEST);
         }
 
         Usuario usuario = new Usuario();
@@ -109,6 +110,16 @@ public class AuthService {
                 ps.executeUpdate();
             } catch (Exception e) {
                 throw new RuntimeException("Error creando paciente: " + e.getMessage());
+            }
+        } else if ("ENFERMERO".equals(role)) {
+            String sql = "INSERT INTO doctores (id_usuario, especialidad, CMP) VALUES (?, 'Enfermería', ?)";
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, usuario.getId());
+                ps.setString(2, "ENF-" + String.format("%06d", usuario.getId()));
+                ps.executeUpdate();
+            } catch (Exception e) {
+                throw new RuntimeException("Error creando enfermero: " + e.getMessage());
             }
         }
 

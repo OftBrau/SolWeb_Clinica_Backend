@@ -215,6 +215,24 @@ public class ConsultorioRepository extends BaseRepository {
                 .findFirst().map(Consultorio::getIdConsultorio).orElse(null);
     }
 
+    public List<Integer> findDoctoresMedicinaGeneralActivos() {
+        String sql = "SELECT d.id_doctor FROM doctores d " +
+                "JOIN usuarios u ON d.id_usuario = u.id_usuario " +
+                "WHERE d.especialidad = 'Medicina General' AND u.estado = 'ACTIVO' " +
+                "AND u.rol IN ('DOCTOR', 'MEDICO') " +
+                "ORDER BY u.nombre";
+        List<Integer> ids = new java.util.ArrayList<>();
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) ids.add(rs.getInt("id_doctor"));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error listando doctores medicina general: " + e.getMessage());
+        }
+        return ids;
+    }
+
     public List<Map<String, Object>> findOcupacion(String fecha) {
         List<Map<String, Object>> result = new ArrayList<>();
         String sql = "SELECT c.id_consultorio, c.nombre, c.ubicacion, ct.hora, ct.estado, " +

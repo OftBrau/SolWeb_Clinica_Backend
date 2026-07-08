@@ -112,7 +112,7 @@ public class InvitacionController {
         String email = auth.getName();
         try (Connection c = dataSource.getConnection();
              PreparedStatement ps = c.prepareStatement(
-                "SELECT p.id_practicante FROM practicantes p JOIN usuarios u ON p.id_usuario = u.id_usuario WHERE u.email = ?")) {
+                "SELECT dp.id_doctor AS id_practicante FROM doctores dp JOIN usuarios u ON dp.id_usuario = u.id_usuario WHERE u.email = ?")) {
             ps.setString(1, email);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return rs.getInt("id_practicante");
@@ -123,7 +123,7 @@ public class InvitacionController {
 
     private String getEmailPracticante(Integer idPracticante) {
         try (Connection c = dataSource.getConnection();
-             PreparedStatement ps = c.prepareStatement("SELECT u.email FROM practicantes p JOIN usuarios u ON p.id_usuario = u.id_usuario WHERE p.id_practicante = ?")) {
+             PreparedStatement ps = c.prepareStatement("SELECT u.email FROM doctores dp JOIN usuarios u ON dp.id_usuario = u.id_usuario WHERE dp.id_doctor = ?")) {
             ps.setInt(1, idPracticante);
             try (ResultSet rs = ps.executeQuery()) { if (rs.next()) return rs.getString("email"); }
         } catch (Exception e) {}

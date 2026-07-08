@@ -7,6 +7,8 @@ import edu.upn.clinica.backend.doctor.dto.DisponibilidadDTO;
 import edu.upn.clinica.backend.doctor.repository.DisponibilidadRepository;
 import edu.upn.clinica.backend.doctor.repository.DoctorRepository;
 import edu.upn.clinica.backend.doctor.repository.DisponibilidadRepository.DisponibilidadRow;
+import edu.upn.clinica.backend.enfermero.repository.EnfermeroRepository;
+import edu.upn.clinica.backend.practicante.repository.PracticanteRepository;
 import edu.upn.clinica.backend.shared.AppException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,7 +17,9 @@ import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class DoctorService {
@@ -25,6 +29,12 @@ public class DoctorService {
 
     @Autowired
     private DoctorRepository doctorRepository;
+
+    @Autowired
+    private EnfermeroRepository enfermeroRepository;
+
+    @Autowired
+    private PracticanteRepository practicanteRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -118,6 +128,13 @@ public class DoctorService {
         doctorRepository.findById(idDoctor)
                 .orElseThrow(() -> new AppException("Doctor no encontrado", HttpStatus.NOT_FOUND));
         doctorRepository.updateFoto(idDoctor, fotoUrl);
+    }
+
+    public Map<String, Object> obtenerEquipo(Integer idDoctor) {
+        Map<String, Object> equipo = new LinkedHashMap<>();
+        equipo.put("enfermeros", enfermeroRepository.findByDoctor(idDoctor));
+        equipo.put("practicantes", practicanteRepository.findAsignacionesByDoctor(idDoctor));
+        return equipo;
     }
 
     private String generarPasswordTemporal() {

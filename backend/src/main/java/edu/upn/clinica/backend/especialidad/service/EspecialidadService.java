@@ -39,6 +39,7 @@ public class EspecialidadService {
         e.setNombre(dto.getNombre());
         e.setDescripcion(dto.getDescripcion());
         e.setEstado("ACTIVO");
+        e.setCostoExtra(dto.getCostoExtra());
         e = especialidadRepository.save(e);
         return new EspecialidadDTO(e);
     }
@@ -56,7 +57,7 @@ public class EspecialidadService {
             }
         }
 
-        especialidadRepository.update(id, dto.getNombre(), dto.getDescripcion());
+        especialidadRepository.update(id, dto.getNombre(), dto.getDescripcion(), dto.getCostoExtra());
         return obtener(id);
     }
 

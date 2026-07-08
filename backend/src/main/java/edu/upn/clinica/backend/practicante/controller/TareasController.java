@@ -133,9 +133,9 @@ public class TareasController {
                  PreparedStatement ps = c.prepareStatement(
                     "SELECT u.nombre, u.apellido, u.email, pp.universidad, " +
                     "pp.titulo_profesional, pp.conclusion_rafa, pp.competencias_rafa, pp.anio_graduacion " +
-                    "FROM practicantes p JOIN usuarios u ON p.id_usuario = u.id_usuario " +
-                    "LEFT JOIN perfil_profesional pp ON pp.id_practicante = p.id_practicante AND pp.activo = TRUE " +
-                    "WHERE p.id_practicante = ?")) {
+                    "FROM doctores dp JOIN usuarios u ON dp.id_usuario = u.id_usuario " +
+                    "LEFT JOIN perfil_profesional pp ON pp.id_practicante = dp.id_doctor AND pp.activo = TRUE " +
+                    "WHERE dp.id_doctor = ?")) {
                 ps.setInt(1, idPracticante);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
@@ -186,7 +186,7 @@ public class TareasController {
     private Integer getPracticanteId(Authentication auth) {
         try (Connection c = dataSource.getConnection();
              PreparedStatement ps = c.prepareStatement(
-                "SELECT p.id_practicante FROM practicantes p JOIN usuarios u ON p.id_usuario = u.id_usuario WHERE u.email = ?")) {
+                "SELECT dp.id_doctor AS id_practicante FROM doctores dp JOIN usuarios u ON dp.id_usuario = u.id_usuario WHERE u.email = ?")) {
             ps.setString(1, auth.getName());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return rs.getInt("id_practicante");
@@ -197,7 +197,7 @@ public class TareasController {
 
     private String getEmailPracticante(Integer idPracticante) {
         try (Connection c = dataSource.getConnection();
-             PreparedStatement ps = c.prepareStatement("SELECT u.email FROM practicantes p JOIN usuarios u ON p.id_usuario = u.id_usuario WHERE p.id_practicante = ?")) {
+             PreparedStatement ps = c.prepareStatement("SELECT u.email FROM doctores dp JOIN usuarios u ON dp.id_usuario = u.id_usuario WHERE dp.id_doctor = ?")) {
             ps.setInt(1, idPracticante);
             try (ResultSet rs = ps.executeQuery()) { if (rs.next()) return rs.getString("email"); }
         } catch (Exception e) {}
@@ -220,7 +220,7 @@ public class TareasController {
             String nombre = ""; String email = "";
             try (Connection c = dataSource.getConnection();
                  PreparedStatement ps = c.prepareStatement(
-                    "SELECT u.nombre, u.apellido, u.email FROM practicantes p JOIN usuarios u ON p.id_usuario = u.id_usuario WHERE p.id_practicante = ?")) {
+                    "SELECT u.nombre, u.apellido, u.email FROM doctores dp JOIN usuarios u ON dp.id_usuario = u.id_usuario WHERE dp.id_doctor = ?")) {
                 ps.setInt(1, idPracticante);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {

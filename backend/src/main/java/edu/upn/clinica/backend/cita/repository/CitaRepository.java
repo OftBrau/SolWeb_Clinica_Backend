@@ -4,6 +4,7 @@ import edu.upn.clinica.backend.cita.model.Cita;
 import edu.upn.clinica.backend.shared.BaseRepository;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -21,6 +22,7 @@ public class CitaRepository extends BaseRepository {
     private static final String SELECT_BASE
             = "SELECT c.id_cita, c.id_paciente, c.id_doctor, c.id_consultorio, "
             + "c.fecha, c.hora, c.estado, c.tipo, c.motivo, "
+            + "c.tipo_reserva, c.id_especialidad, c.id_asistente, c.id_enfermero, c.monto_extra, "
             + "COALESCE(co.nombre, 'Sin asignar') AS consultorio "
             + "FROM citas c "
             + "LEFT JOIN consultorios co ON c.id_consultorio = co.id_consultorio ";
@@ -28,15 +30,19 @@ public class CitaRepository extends BaseRepository {
     // --- Insertar nueva cita ---
     public Cita save(Cita cita) {
         String sql = "INSERT INTO citas (id_paciente, id_doctor, id_consultorio, "
-                + "fecha, hora, estado, tipo, motivo) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                + "fecha, hora, estado, tipo, motivo, tipo_reserva, id_especialidad, id_asistente, id_enfermero, monto_extra) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setInt(1, cita.getIdPaciente());
-            ps.setInt(2, cita.getIdDoctor());
 
-            // consultorio es opcional en la tabla (YES en DDL)
+            if (cita.getIdDoctor() != null) {
+                ps.setInt(2, cita.getIdDoctor());
+            } else {
+                ps.setNull(2, Types.INTEGER);
+            }
+
             if (cita.getIdConsultorio() != null) {
                 ps.setInt(3, cita.getIdConsultorio());
             } else {
@@ -46,8 +52,29 @@ public class CitaRepository extends BaseRepository {
             ps.setDate(4, Date.valueOf(cita.getFecha()));
             ps.setTime(5, Time.valueOf(cita.getHora()));
             ps.setString(6, cita.getEstado());
-            ps.setString(7, cita.getTipo());
+            ps.setString(7, cita.getTipo() != null ? cita.getTipo() : "PRESENCIAL");
             ps.setString(8, cita.getMotivo());
+            ps.setString(9, cita.getTipoReserva() != null ? cita.getTipoReserva() : "BASICA");
+
+            if (cita.getIdEspecialidad() != null) {
+                ps.setInt(10, cita.getIdEspecialidad());
+            } else {
+                ps.setNull(10, Types.INTEGER);
+            }
+
+            if (cita.getIdAsistente() != null) {
+                ps.setInt(11, cita.getIdAsistente());
+            } else {
+                ps.setNull(11, Types.INTEGER);
+            }
+
+            if (cita.getIdEnfermero() != null) {
+                ps.setInt(12, cita.getIdEnfermero());
+            } else {
+                ps.setNull(12, Types.INTEGER);
+            }
+
+            ps.setBigDecimal(13, cita.getMontoExtra() != null ? cita.getMontoExtra() : BigDecimal.ZERO);
             ps.executeUpdate();
 
             ResultSet rs = ps.getGeneratedKeys();
@@ -192,12 +219,26 @@ public class CitaRepository extends BaseRepository {
         return lista;
     }
 
+    public void updateAsignacion(Integer idCita, Integer idDoctor, Integer idConsultorio, Integer idAsistente) {
+        String sql = "UPDATE citas SET id_doctor = ?, id_consultorio = ?, id_asistente = ?, estado = 'CONFIRMADA' WHERE id_cita = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idDoctor);
+            ps.setInt(2, idConsultorio);
+            ps.setInt(3, idAsistente);
+            ps.setInt(4, idCita);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            throw new RuntimeException("Error actualizando asignacion de cita: " + e.getMessage());
+        }
+    }
+
     // --- Mapear ResultSet → Cita ---
     private Cita mapRow(ResultSet rs) throws Exception {
         Cita c = new Cita();
         c.setIdCita(rs.getInt("id_cita"));
         c.setIdPaciente(rs.getInt("id_paciente"));
-        c.setIdDoctor(rs.getInt("id_doctor"));
+        int idDoc = rs.getInt("id_doctor");
+        if (!rs.wasNull()) c.setIdDoctor(idDoc);
         int idCons = rs.getInt("id_consultorio");
         if (!rs.wasNull()) {
             c.setIdConsultorio(idCons);
@@ -208,6 +249,14 @@ public class CitaRepository extends BaseRepository {
         c.setTipo(rs.getString("tipo"));
         c.setMotivo(rs.getString("motivo"));
         c.setConsultorio(rs.getString("consultorio"));
+        c.setTipoReserva(rs.getString("tipo_reserva"));
+        int idEsp = rs.getInt("id_especialidad");
+        if (!rs.wasNull()) c.setIdEspecialidad(idEsp);
+        int idAsist = rs.getInt("id_asistente");
+        if (!rs.wasNull()) c.setIdAsistente(idAsist);
+        int idEnf = rs.getInt("id_enfermero");
+        if (!rs.wasNull()) c.setIdEnfermero(idEnf);
+        c.setMontoExtra(rs.getBigDecimal("monto_extra"));
         return c;
     }
 }

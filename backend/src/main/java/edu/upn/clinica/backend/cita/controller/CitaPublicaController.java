@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -60,12 +61,11 @@ public class CitaPublicaController {
     //  Paso 'existente' del formulario Angular
     // ─────────────────────────────────────────────
     @GetMapping("/buscar-paciente")
-    @Operation(summary = "Buscar paciente por email y código de estudiante")
+    @Operation(summary = "Buscar paciente por email")
     public ResponseEntity<ApiResponse<Paciente>> buscarPaciente(
-            @RequestParam String email,
-            @RequestParam String codigo) {
+            @RequestParam String email) {
 
-        Paciente paciente = citaPublicaService.buscarPaciente(email, codigo);
+        Paciente paciente = citaPublicaService.buscarPaciente(email);
         return ResponseEntity.ok(ApiResponse.ok("Paciente encontrado", paciente));
     }
 
@@ -83,5 +83,23 @@ public class CitaPublicaController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.ok("Cita agendada exitosamente", response));
+    }
+
+    @PostMapping("/reservar-basica")
+    @Operation(summary = "Reservar cita basica - sistema asigna doctor automatico (publico)")
+    public ResponseEntity<ApiResponse<CitaPublicaResponse>> reservarBasica(
+            @RequestBody Map<String, Object> body) {
+        CitaPublicaResponse response = citaPublicaService.reservarBasicaPublica(body);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok("Cita basica reservada correctamente", response));
+    }
+
+    @PostMapping("/reservar-especialista")
+    @Operation(summary = "Reservar cita con especialista - requiere asignacion del asistente (publico)")
+    public ResponseEntity<ApiResponse<CitaPublicaResponse>> reservarEspecialista(
+            @RequestBody Map<String, Object> body) {
+        CitaPublicaResponse response = citaPublicaService.reservarEspecialistaPublica(body);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok("Solicitud de cita especialista registrada", response));
     }
 }

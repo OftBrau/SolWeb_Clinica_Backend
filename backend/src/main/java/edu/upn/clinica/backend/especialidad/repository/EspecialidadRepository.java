@@ -4,6 +4,7 @@ import edu.upn.clinica.backend.especialidad.model.Especialidad;
 import edu.upn.clinica.backend.shared.BaseRepository;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +14,7 @@ import java.util.Optional;
 public class EspecialidadRepository extends BaseRepository {
 
     public List<Especialidad> findAll() {
-        String sql = "SELECT id_especialidad, nombre, descripcion, estado FROM especialidades ORDER BY nombre";
+        String sql = "SELECT id_especialidad, nombre, descripcion, estado, costo_extra FROM especialidades ORDER BY nombre";
         List<Especialidad> lista = new ArrayList<>();
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -26,7 +27,7 @@ public class EspecialidadRepository extends BaseRepository {
     }
 
     public List<Especialidad> findAllActivas() {
-        String sql = "SELECT id_especialidad, nombre, descripcion, estado FROM especialidades WHERE estado = 'ACTIVO' ORDER BY nombre";
+        String sql = "SELECT id_especialidad, nombre, descripcion, estado, costo_extra FROM especialidades WHERE estado = 'ACTIVO' ORDER BY nombre";
         List<Especialidad> lista = new ArrayList<>();
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -39,7 +40,7 @@ public class EspecialidadRepository extends BaseRepository {
     }
 
     public Optional<Especialidad> findById(Integer id) {
-        String sql = "SELECT id_especialidad, nombre, descripcion, estado FROM especialidades WHERE id_especialidad = ?";
+        String sql = "SELECT id_especialidad, nombre, descripcion, estado, costo_extra FROM especialidades WHERE id_especialidad = ?";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
@@ -66,12 +67,13 @@ public class EspecialidadRepository extends BaseRepository {
     }
 
     public Especialidad save(Especialidad e) {
-        String sql = "INSERT INTO especialidades (nombre, descripcion, estado) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO especialidades (nombre, descripcion, estado, costo_extra) VALUES (?, ?, ?, ?)";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, e.getNombre());
             ps.setString(2, e.getDescripcion());
             ps.setString(3, e.getEstado() != null ? e.getEstado() : "ACTIVO");
+            ps.setBigDecimal(4, e.getCostoExtra());
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) e.setIdEspecialidad(rs.getInt(1));
@@ -82,13 +84,14 @@ public class EspecialidadRepository extends BaseRepository {
         }
     }
 
-    public void update(Integer id, String nombre, String descripcion) {
-        String sql = "UPDATE especialidades SET nombre = ?, descripcion = ? WHERE id_especialidad = ?";
+    public void update(Integer id, String nombre, String descripcion, BigDecimal costoExtra) {
+        String sql = "UPDATE especialidades SET nombre = ?, descripcion = ?, costo_extra = ? WHERE id_especialidad = ?";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, nombre);
             ps.setString(2, descripcion);
-            ps.setInt(3, id);
+            ps.setBigDecimal(3, costoExtra);
+            ps.setInt(4, id);
             ps.executeUpdate();
         } catch (Exception e) {
             throw new RuntimeException("Error actualizando especialidad: " + e.getMessage());
@@ -113,6 +116,7 @@ public class EspecialidadRepository extends BaseRepository {
         e.setNombre(rs.getString("nombre"));
         e.setDescripcion(rs.getString("descripcion"));
         e.setEstado(rs.getString("estado"));
+        e.setCostoExtra(rs.getBigDecimal("costo_extra"));
         return e;
     }
 }

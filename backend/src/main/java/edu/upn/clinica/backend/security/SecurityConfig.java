@@ -46,17 +46,20 @@ public class SecurityConfig {
                 .requestMatchers(
                         "/api/auth/**",
                         "/v3/api-docs/**",
-                        "/api/cita-publica/**", 
+                        "/api/cita-publica/**",
                         "/swagger-ui/**",
                         "/swagger-ui.html",
                         "/ws/**",
                         "/api/farmacia/pagos/notificacion",
                         "/api/farmacia/reclamaciones/publico",
-                        "/api/farmacia/ventas/checkout-public"
+                        "/api/farmacia/ventas/checkout-public",
+                        "/api/pagos/citas/notificacion",
+                        "/api/pagos/citas/crear",
+                        "/api/pagos/citas/cita/**"
                 ).permitAll()
                 .requestMatchers("/api/admin/hce/**").hasRole("ADMINISTRADOR")
                 .requestMatchers("/api/hce/**")
-                .hasAnyRole("PACIENTE", "DOCTOR", "ADMINISTRADOR", "DIRECTOR", "PRACTICANTE")
+                .hasAnyRole("PACIENTE", "DOCTOR", "ADMINISTRADOR", "DIRECTOR", "PRACTICANTE", "ENFERMERO")
                 .requestMatchers("/api/citas/**").hasRole("PACIENTE")
                 .requestMatchers("/api/mis-citas/**").hasRole("PACIENTE")
                 .requestMatchers("/api/teleconsulta/**")
@@ -64,7 +67,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/consultas/**")
                 .hasAnyRole("DOCTOR", "PRACTICANTE", "ADMINISTRADOR", "DIRECTOR")
                 .requestMatchers("/api/operaciones/**")
-                .hasRole("ADMINISTRATIVO")
+                .hasAnyRole("ADMINISTRATIVO", "ADMINISTRADOR")
                 .requestMatchers("/api/reportes/**")
                 .hasAnyRole("DIRECTOR", "ADMINISTRADOR", "ADMINISTRATIVO")
                 .requestMatchers("/api/admin/**")
@@ -85,7 +88,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/appointments").hasRole("PACIENTE")
                 .requestMatchers("/api/examenes/**")
                 .hasAnyRole("DOCTOR", "ADMINISTRADOR")
-                .requestMatchers("/api/practicante/invitaciones/doctor", "/api/practicante/invitaciones").hasAnyRole("DOCTOR", "MEDICO")
+                .requestMatchers("/api/practicante/invitaciones/doctor", "/api/practicante/invitaciones").hasAnyRole("DOCTOR", "MEDICO", "ADMINISTRADOR")
                 .requestMatchers("/api/practicante/invitaciones/{id}/aceptar", "/api/practicante/invitaciones/{id}/rechazar").hasRole("PRACTICANTE")
                 .requestMatchers("/api/practicante/mis-invitaciones/**").hasRole("PRACTICANTE")
                 .requestMatchers("/api/practicante/**")
@@ -108,6 +111,12 @@ public class SecurityConfig {
                 .requestMatchers("/api/perfil/foto").authenticated()
                 .requestMatchers("/api/perfil/profesional/**").hasAnyRole("PRACTICANTE", "DOCTOR", "ADMINISTRADOR", "DIRECTOR")
                 .requestMatchers("/api/perfil/practicantes").hasAnyRole("DOCTOR", "ADMINISTRADOR", "DIRECTOR")
+                .requestMatchers("/api/paciente/reservas/**").hasRole("PACIENTE")
+                .requestMatchers("/api/pagos/citas/**").hasAnyRole("PACIENTE", "ADMINISTRADOR", "ASISTENTE")
+                .requestMatchers("/api/asistente/**").hasAnyRole("ASISTENTE", "ADMINISTRADOR")
+                .requestMatchers("/api/enfermero/**").hasAnyRole("ENFERMERO", "ADMINISTRADOR")
+                .requestMatchers("/api/admin/enfermeros/**").hasRole("ADMINISTRADOR")
+                .requestMatchers("/api/admin/asistentes/**").hasRole("ADMINISTRADOR")
                 .anyRequest().authenticated()
                 )
                 // Filtro JWT
