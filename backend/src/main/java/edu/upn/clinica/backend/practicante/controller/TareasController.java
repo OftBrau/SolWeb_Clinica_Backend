@@ -73,7 +73,7 @@ public class TareasController {
 
     @GetMapping("/mis-tareas")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> misTareas(Authentication auth) {
-        return ResponseEntity.ok(ApiResponse.ok("Mis tareas", repo.findTareasByPracticante(getPracticanteId(auth))));
+        return ResponseEntity.ok(ApiResponse.ok("Mis tareas", repo.findTareasByPracticante(getTareasPracticanteId(auth))));
     }
 
     @PutMapping("/tareas/{id}/estado")
@@ -197,7 +197,7 @@ public class TareasController {
 
     private String getEmailPracticante(Integer idPracticante) {
         try (Connection c = dataSource.getConnection();
-             PreparedStatement ps = c.prepareStatement("SELECT u.email FROM doctores dp JOIN usuarios u ON dp.id_usuario = u.id_usuario WHERE dp.id_doctor = ?")) {
+             PreparedStatement ps = c.prepareStatement("SELECT u.email FROM practicantes p JOIN usuarios u ON p.id_usuario = u.id_usuario WHERE p.id_practicante = ?")) {
             ps.setInt(1, idPracticante);
             try (ResultSet rs = ps.executeQuery()) { if (rs.next()) return rs.getString("email"); }
         } catch (Exception e) {}
@@ -309,4 +309,37 @@ public class TareasController {
     }
 
     private String safeStr(String s) { return s != null ? s : "-"; }
+
+    private Integer getTareasPracticanteId(Authentication auth) {
+        String email = auth.getName();
+        try (Connection c = dataSource.getConnection();
+             PreparedStatement ps = c.prepareStatement(
+                "SELECT p.id_practicante FROM practicantes p JOIN usuarios u ON p.id_usuario = u.id_usuario WHERE u.email = ?")) {
+            ps.setString(1, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt("id_practicante");
+            }
+        } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+
+        try (Connection c = dataSource.getConnection();
+             PreparedStatement ps = c.prepareStatement(
+                "SELECT id_usuario FROM usuarios WHERE email = ? AND rol = 'PRACTICANTE'")) {
+            ps.setString(1, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int idUsuario = rs.getInt("id_usuario");
+                    try (PreparedStatement ps2 = c.prepareStatement(
+                            "INSERT IGNORE INTO practicantes (id_usuario, ciclo) VALUES (?, 1)",
+                            PreparedStatement.RETURN_GENERATED_KEYS)) {
+                        ps2.setInt(1, idUsuario);
+                        ps2.executeUpdate();
+                        try (ResultSet rs2 = ps2.getGeneratedKeys()) {
+                            if (rs2.next()) return rs2.getInt(1);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+        throw new AppException("Solo practicantes pueden acceder", HttpStatus.FORBIDDEN);
+    }
 }

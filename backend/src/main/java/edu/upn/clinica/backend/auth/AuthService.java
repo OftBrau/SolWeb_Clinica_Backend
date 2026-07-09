@@ -70,8 +70,9 @@ public class AuthService {
 
         String role = request.getRole().toUpperCase();
         if (!"DOCTOR".equals(role) && !"PACIENTE".equals(role)
-                && !"ENFERMERO".equals(role) && !"ASISTENTE".equals(role)) {
-            throw new AppException("Rol invalido. Use DOCTOR, PACIENTE, ENFERMERO o ASISTENTE", HttpStatus.BAD_REQUEST);
+                && !"ENFERMERO".equals(role) && !"ASISTENTE".equals(role)
+                && !"PRACTICANTE".equals(role)) {
+            throw new AppException("Rol invalido. Use DOCTOR, PACIENTE, ENFERMERO, ASISTENTE o PRACTICANTE", HttpStatus.BAD_REQUEST);
         }
 
         Usuario usuario = new Usuario();
@@ -120,6 +121,24 @@ public class AuthService {
                 ps.executeUpdate();
             } catch (Exception e) {
                 throw new RuntimeException("Error creando enfermero: " + e.getMessage());
+            }
+        } else if ("PRACTICANTE".equals(role)) {
+            String sql = "INSERT INTO doctores (id_usuario, especialidad, CMP) VALUES (?, 'Practicante', ?)";
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, usuario.getId());
+                ps.setString(2, "PRA-" + String.format("%06d", usuario.getId()));
+                ps.executeUpdate();
+            } catch (Exception e) {
+                throw new RuntimeException("Error creando practicante en doctores: " + e.getMessage());
+            }
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(
+                     "INSERT IGNORE INTO practicantes (id_usuario, ciclo) VALUES (?, 1)")) {
+                ps.setInt(1, usuario.getId());
+                ps.executeUpdate();
+            } catch (Exception e) {
+                throw new RuntimeException("Error creando practicante en practicantes: " + e.getMessage());
             }
         }
 

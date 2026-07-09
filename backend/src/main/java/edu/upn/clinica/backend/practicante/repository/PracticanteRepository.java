@@ -402,7 +402,7 @@ public class PracticanteRepository extends BaseRepository {
     public List<java.util.Map<String, Object>> findInvitacionesByDoctor(Integer idDoctor) {
         List<java.util.Map<String, Object>> list = new ArrayList<>();
         String sql = "SELECT i.*, CONCAT(u.nombre,' ',u.apellido) AS practicante FROM invitaciones_practicante i " +
-                "JOIN doctores dp ON i.id_practicante = dp.id_doctor JOIN usuarios u ON dp.id_usuario = u.id_usuario " +
+                "JOIN practicantes p ON i.id_practicante = p.id_practicante JOIN usuarios u ON p.id_usuario = u.id_usuario " +
                 "WHERE i.id_doctor = ? ORDER BY i.fecha_creacion DESC";
         try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, idDoctor);
@@ -423,11 +423,20 @@ public class PracticanteRepository extends BaseRepository {
                 "CONCAT(pu.nombre,' ',pu.apellido) AS practicante, d.especialidad " +
                 "FROM invitaciones_practicante i " +
                 "JOIN doctores d ON i.id_doctor = d.id_doctor JOIN usuarios du ON d.id_usuario = du.id_usuario " +
-                "JOIN doctores dp ON i.id_practicante = dp.id_doctor JOIN usuarios pu ON dp.id_usuario = pu.id_usuario " +
+                "JOIN practicantes p ON i.id_practicante = p.id_practicante JOIN usuarios pu ON p.id_usuario = pu.id_usuario " +
                 "WHERE i.id_invitacion = ?";
         try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) { if (rs.next()) return mapInvitacion(rs); }
+        } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+        return null;
+    }
+
+    public Integer findIdPracticanteByDoctorId(Integer idDoctor) {
+        String sql = "SELECT p.id_practicante FROM practicantes p JOIN doctores d ON p.id_usuario = d.id_usuario WHERE d.id_doctor = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idDoctor);
+            try (ResultSet rs = ps.executeQuery()) { if (rs.next()) return rs.getInt("id_practicante"); }
         } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
         return null;
     }
@@ -463,7 +472,7 @@ public class PracticanteRepository extends BaseRepository {
             ps.setInt(1, idDoctor); ps.setInt(2, idPracticante); ps.setString(3, titulo);
             ps.setString(4, descripcion); ps.setString(5, tipo != null ? tipo : "OTRO");
             ps.setString(6, prioridad != null ? prioridad : "MEDIA");
-            ps.setDate(7, fechaLimite != null ? Date.valueOf(fechaLimite) : null);
+            ps.setDate(7, fechaLimite != null && !fechaLimite.isBlank() ? Date.valueOf(fechaLimite) : null);
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) { if (keys.next()) return Map.of("id", keys.getInt(1)); }
         } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
@@ -485,7 +494,7 @@ public class PracticanteRepository extends BaseRepository {
     public List<Map<String, Object>> findTareasByDoctor(Integer idDoctor) {
         List<Map<String, Object>> list = new ArrayList<>();
         String sql = "SELECT t.*, CONCAT(u.nombre,' ',u.apellido) AS practicante FROM tareas_practicante t " +
-                "JOIN doctores dp ON t.id_practicante = dp.id_doctor JOIN usuarios u ON dp.id_usuario = u.id_usuario " +
+                "JOIN practicantes p ON t.id_practicante = p.id_practicante JOIN usuarios u ON p.id_usuario = u.id_usuario " +
                 "WHERE t.id_doctor = ? ORDER BY t.fecha_asignacion DESC";
         try (Connection c = getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, idDoctor);

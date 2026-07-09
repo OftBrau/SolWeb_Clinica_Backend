@@ -72,6 +72,26 @@ public class UsuarioService {
             }
         }
 
+        if ("PRACTICANTE".equals(request.getRol())) {
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(
+                     "INSERT IGNORE INTO doctores (id_usuario, especialidad, CMP) VALUES (?, 'Practicante', ?)")) {
+                ps.setInt(1, usuario.getId());
+                ps.setString(2, "PRA-" + String.format("%06d", usuario.getId()));
+                ps.executeUpdate();
+            } catch (Exception e) {
+                throw new RuntimeException("Error creando entrada doctores para practicante: " + e.getMessage());
+            }
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(
+                     "INSERT IGNORE INTO practicantes (id_usuario, ciclo) VALUES (?, 1)")) {
+                ps.setInt(1, usuario.getId());
+                ps.executeUpdate();
+            } catch (Exception e) {
+                throw new RuntimeException("Error creando entrada practicantes para practicante: " + e.getMessage());
+            }
+        }
+
         emailService.enviarCredenciales(
                 usuario.getEmail(),
                 usuario.getNombre() + " " + usuario.getApellido(),
@@ -116,6 +136,26 @@ public class UsuarioService {
                 ps.executeUpdate();
             } catch (Exception e) {
                 System.err.println("Error creando doctores para enfermero: " + e.getMessage());
+            }
+        }
+
+        if ("PRACTICANTE".equals(rol)) {
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(
+                     "INSERT IGNORE INTO doctores (id_usuario, especialidad, CMP) VALUES (?, 'Practicante', ?)")) {
+                ps.setInt(1, id);
+                ps.setString(2, "PRA-" + String.format("%06d", id));
+                ps.executeUpdate();
+            } catch (Exception e) {
+                System.err.println("Error creando doctores para practicante: " + e.getMessage());
+            }
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(
+                     "INSERT IGNORE INTO practicantes (id_usuario, ciclo) VALUES (?, 1)")) {
+                ps.setInt(1, id);
+                ps.executeUpdate();
+            } catch (Exception e) {
+                System.err.println("Error creando practicantes para practicante: " + e.getMessage());
             }
         }
     }

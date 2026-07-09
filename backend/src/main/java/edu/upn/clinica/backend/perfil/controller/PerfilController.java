@@ -155,6 +155,26 @@ public class PerfilController {
                 if (rs.next()) return rs.getInt("id_practicante");
             }
         } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+
+        try (Connection c = dataSource.getConnection();
+             PreparedStatement ps = c.prepareStatement(
+                "SELECT id_usuario FROM usuarios WHERE email = ? AND rol = 'PRACTICANTE'")) {
+            ps.setString(1, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int idUsuario = rs.getInt("id_usuario");
+                    try (PreparedStatement ps2 = c.prepareStatement(
+                            "INSERT IGNORE INTO practicantes (id_usuario, ciclo) VALUES (?, 1)",
+                            PreparedStatement.RETURN_GENERATED_KEYS)) {
+                        ps2.setInt(1, idUsuario);
+                        ps2.executeUpdate();
+                        try (ResultSet rs2 = ps2.getGeneratedKeys()) {
+                            if (rs2.next()) return rs2.getInt(1);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
         throw new AppException("Solo practicantes pueden acceder", HttpStatus.FORBIDDEN);
     }
 

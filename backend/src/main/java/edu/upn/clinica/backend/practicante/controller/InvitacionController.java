@@ -68,7 +68,7 @@ public class InvitacionController {
             throw new AppException("No autorizado", HttpStatus.FORBIDDEN);
 
         repo.updateInvitacionEstado(id, "ACEPTADA");
-        repo.asignarSupervision((Integer) inv.get("idDoctor"), idPracticante);
+        repo.asignarSupervision((Integer) inv.get("idDoctor"), getDoctorIdFromPracticanteId(idPracticante));
 
         // Notificar al doctor
         String emailDoctor = getEmailDoctor((Integer) inv.get("idDoctor"));
@@ -112,10 +112,30 @@ public class InvitacionController {
         String email = auth.getName();
         try (Connection c = dataSource.getConnection();
              PreparedStatement ps = c.prepareStatement(
-                "SELECT dp.id_doctor AS id_practicante FROM doctores dp JOIN usuarios u ON dp.id_usuario = u.id_usuario WHERE u.email = ?")) {
+                "SELECT p.id_practicante FROM practicantes p JOIN usuarios u ON p.id_usuario = u.id_usuario WHERE u.email = ?")) {
             ps.setString(1, email);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return rs.getInt("id_practicante");
+            }
+        } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+
+        try (Connection c = dataSource.getConnection();
+             PreparedStatement ps = c.prepareStatement(
+                "SELECT id_usuario FROM usuarios WHERE email = ? AND rol = 'PRACTICANTE'")) {
+            ps.setString(1, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int idUsuario = rs.getInt("id_usuario");
+                    try (PreparedStatement ps2 = c.prepareStatement(
+                            "INSERT IGNORE INTO practicantes (id_usuario, ciclo) VALUES (?, 1)",
+                            PreparedStatement.RETURN_GENERATED_KEYS)) {
+                        ps2.setInt(1, idUsuario);
+                        ps2.executeUpdate();
+                        try (ResultSet rs2 = ps2.getGeneratedKeys()) {
+                            if (rs2.next()) return rs2.getInt(1);
+                        }
+                    }
+                }
             }
         } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
         throw new AppException("Solo practicantes pueden acceder", HttpStatus.FORBIDDEN);
@@ -123,7 +143,7 @@ public class InvitacionController {
 
     private String getEmailPracticante(Integer idPracticante) {
         try (Connection c = dataSource.getConnection();
-             PreparedStatement ps = c.prepareStatement("SELECT u.email FROM doctores dp JOIN usuarios u ON dp.id_usuario = u.id_usuario WHERE dp.id_doctor = ?")) {
+             PreparedStatement ps = c.prepareStatement("SELECT u.email FROM practicantes p JOIN usuarios u ON p.id_usuario = u.id_usuario WHERE p.id_practicante = ?")) {
             ps.setInt(1, idPracticante);
             try (ResultSet rs = ps.executeQuery()) { if (rs.next()) return rs.getString("email"); }
         } catch (Exception e) {}
@@ -137,5 +157,15 @@ public class InvitacionController {
             try (ResultSet rs = ps.executeQuery()) { if (rs.next()) return rs.getString("email"); }
         } catch (Exception e) {}
         return null;
+    }
+
+    private Integer getDoctorIdFromPracticanteId(Integer idPracticante) {
+        try (Connection c = dataSource.getConnection();
+             PreparedStatement ps = c.prepareStatement(
+                "SELECT d.id_doctor FROM practicantes p JOIN doctores d ON p.id_usuario = d.id_usuario WHERE p.id_practicante = ?")) {
+            ps.setInt(1, idPracticante);
+            try (ResultSet rs = ps.executeQuery()) { if (rs.next()) return rs.getInt("id_doctor"); }
+        } catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+        throw new AppException("Doctor no encontrado", HttpStatus.NOT_FOUND);
     }
 }
