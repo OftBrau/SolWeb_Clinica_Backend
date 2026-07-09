@@ -61,6 +61,7 @@ public class PagoCitaController {
                     m.put("metodoPago", p.getMetodoPago());
                     m.put("estadoPago", p.getEstadoPago());
                     m.put("referenciaMp", p.getReferenciaMp());
+                    m.put("codigoSunat", p.getCodigoSunat());
                     m.put("fechaPago", p.getFechaPago() != null ? p.getFechaPago().toString() : null);
                     return m;
                 }).collect(Collectors.toList());

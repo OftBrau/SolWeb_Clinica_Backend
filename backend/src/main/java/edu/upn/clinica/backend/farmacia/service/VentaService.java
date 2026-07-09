@@ -62,6 +62,7 @@ public class VentaService {
         venta.setTotal(total);
         venta.setEstado("PENDIENTE");
         venta.setMetodoPago("MERCADOPAGO");
+        venta.setCodigoSunat(request.getCodigoSunat() != null ? request.getCodigoSunat() : "003");
 
         venta = ventaRepository.save(venta);
 
@@ -123,7 +124,8 @@ public class VentaService {
             detalles.add(d);
         }
 
-        Venta venta = ventaRepository.savePublic(request.getNombre(), request.getEmail(), request.getTelefono(), total, "PENDIENTE", "MERCADOPAGO");
+        String codigoSunat = request.getCodigoSunat() != null ? request.getCodigoSunat() : "003";
+        Venta venta = ventaRepository.savePublic(request.getNombre(), request.getEmail(), request.getTelefono(), total, "PENDIENTE", "MERCADOPAGO", codigoSunat);
 
         for (DetalleVenta d : detalles) {
             d.setIdVenta(venta.getIdVenta());
@@ -160,6 +162,7 @@ public class VentaService {
         d.setMetodoPago(v.getMetodoPago());
         d.setIdPreferenciaMp(v.getIdPreferenciaMp());
         d.setIdPagoMp(v.getIdPagoMp());
+        d.setCodigoSunat(v.getCodigoSunat());
         if (v.getDetalles() != null) {
             d.setDetalles(v.getDetalles().stream().map(det -> {
                 DetalleVentaDTO dd = new DetalleVentaDTO();

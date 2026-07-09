@@ -14,6 +14,7 @@ public class VentaResponseDTO {
     private String metodoPago;
     private String idPreferenciaMp;
     private String idPagoMp;
+    private String codigoSunat;
     private String initPoint;
     private List<DetalleVentaDTO> detalles;
 
@@ -40,6 +41,9 @@ public class VentaResponseDTO {
 
     public String getIdPagoMp() { return idPagoMp; }
     public void setIdPagoMp(String idPagoMp) { this.idPagoMp = idPagoMp; }
+
+    public String getCodigoSunat() { return codigoSunat; }
+    public void setCodigoSunat(String codigoSunat) { this.codigoSunat = codigoSunat; }
 
     public String getInitPoint() { return initPoint; }
     public void setInitPoint(String initPoint) { this.initPoint = initPoint; }

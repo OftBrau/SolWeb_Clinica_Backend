@@ -13,8 +13,8 @@ import java.util.Optional;
 public class PagoCitaRepository extends BaseRepository {
 
     public PagoCita save(PagoCita pago) {
-        String sql = "INSERT INTO pagos_citas (id_cita, monto, metodo_pago, estado_pago, referencia_mp) " +
-                "VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO pagos_citas (id_cita, monto, metodo_pago, estado_pago, referencia_mp, codigo_sunat) " +
+                "VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, pago.getIdCita());
@@ -22,6 +22,7 @@ public class PagoCitaRepository extends BaseRepository {
             ps.setString(3, pago.getMetodoPago() != null ? pago.getMetodoPago() : "MERCADOPAGO");
             ps.setString(4, pago.getEstadoPago() != null ? pago.getEstadoPago() : "PENDIENTE");
             ps.setString(5, pago.getReferenciaMp());
+            ps.setString(6, pago.getCodigoSunat());
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) pago.setIdPago(rs.getInt(1));
@@ -33,7 +34,7 @@ public class PagoCitaRepository extends BaseRepository {
     }
 
     public Optional<PagoCita> findByCita(Integer idCita) {
-        String sql = "SELECT id_pago, id_cita, monto, metodo_pago, estado_pago, referencia_mp, fecha_pago " +
+        String sql = "SELECT id_pago, id_cita, monto, metodo_pago, estado_pago, referencia_mp, fecha_pago, codigo_sunat " +
                 "FROM pagos_citas WHERE id_cita = ? ORDER BY fecha_pago DESC LIMIT 1";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -62,7 +63,7 @@ public class PagoCitaRepository extends BaseRepository {
 
     public List<PagoCita> findByPaciente(Integer idPaciente) {
         String sql = "SELECT pc.id_pago, pc.id_cita, pc.monto, pc.metodo_pago, pc.estado_pago, " +
-                "pc.referencia_mp, pc.fecha_pago " +
+                "pc.referencia_mp, pc.fecha_pago, pc.codigo_sunat " +
                 "FROM pagos_citas pc " +
                 "JOIN citas c ON pc.id_cita = c.id_cita " +
                 "WHERE c.id_paciente = ? " +
@@ -90,6 +91,7 @@ public class PagoCitaRepository extends BaseRepository {
         p.setReferenciaMp(rs.getString("referencia_mp"));
         Timestamp fp = rs.getTimestamp("fecha_pago");
         if (fp != null) p.setFechaPago(fp.toLocalDateTime());
+        p.setCodigoSunat(rs.getString("codigo_sunat"));
         return p;
     }
 }

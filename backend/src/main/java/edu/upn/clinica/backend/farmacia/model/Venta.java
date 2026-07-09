@@ -14,6 +14,7 @@ public class Venta {
     private String metodoPago;
     private String idPreferenciaMp;
     private String idPagoMp;
+    private String codigoSunat;
     private List<DetalleVenta> detalles;
 
     public Venta() {}
@@ -41,6 +42,9 @@ public class Venta {
 
     public String getIdPagoMp() { return idPagoMp; }
     public void setIdPagoMp(String idPagoMp) { this.idPagoMp = idPagoMp; }
+
+    public String getCodigoSunat() { return codigoSunat; }
+    public void setCodigoSunat(String codigoSunat) { this.codigoSunat = codigoSunat; }
 
     public List<DetalleVenta> getDetalles() { return detalles; }
     public void setDetalles(List<DetalleVenta> detalles) { this.detalles = detalles; }

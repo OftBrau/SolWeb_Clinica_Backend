@@ -12,6 +12,7 @@ public class PagoCita {
     private String        estadoPago;
     private String        referenciaMp;
     private LocalDateTime fechaPago;
+    private String        codigoSunat;
 
     public PagoCita() {}
 
@@ -35,4 +36,7 @@ public class PagoCita {
 
     public LocalDateTime getFechaPago() { return fechaPago; }
     public void          setFechaPago(LocalDateTime fechaPago) { this.fechaPago = fechaPago; }
+
+    public String getCodigoSunat() { return codigoSunat; }
+    public void   setCodigoSunat(String codigoSunat) { this.codigoSunat = codigoSunat; }
 }

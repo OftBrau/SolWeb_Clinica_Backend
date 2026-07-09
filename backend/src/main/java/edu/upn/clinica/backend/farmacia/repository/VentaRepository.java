@@ -15,8 +15,8 @@ import java.util.Optional;
 public class VentaRepository extends BaseRepository {
 
     public Venta save(Venta v) {
-        String sql = "INSERT INTO ventas_farmacia (id_paciente, total, estado, metodo_pago, id_preferencia_mp) "
-                + "VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO ventas_farmacia (id_paciente, total, estado, metodo_pago, id_preferencia_mp, codigo_sunat) "
+                + "VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, v.getIdPaciente());
@@ -24,6 +24,7 @@ public class VentaRepository extends BaseRepository {
             ps.setString(3, v.getEstado());
             ps.setString(4, v.getMetodoPago());
             ps.setString(5, v.getIdPreferenciaMp());
+            ps.setString(6, v.getCodigoSunat());
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) v.setIdVenta(keys.getInt(1));
@@ -114,9 +115,9 @@ public class VentaRepository extends BaseRepository {
         return lista;
     }
 
-    public Venta savePublic(String nombre, String email, String telefono, BigDecimal total, String estado, String metodoPago) {
-        String sql = "INSERT INTO ventas_farmacia (nombre_contacto, email_contacto, telefono_contacto, total, estado, metodo_pago) "
-                + "VALUES (?, ?, ?, ?, ?, ?)";
+    public Venta savePublic(String nombre, String email, String telefono, BigDecimal total, String estado, String metodoPago, String codigoSunat) {
+        String sql = "INSERT INTO ventas_farmacia (nombre_contacto, email_contacto, telefono_contacto, total, estado, metodo_pago, codigo_sunat) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, nombre);
@@ -125,6 +126,7 @@ public class VentaRepository extends BaseRepository {
             ps.setBigDecimal(4, total);
             ps.setString(5, estado);
             ps.setString(6, metodoPago);
+            ps.setString(7, codigoSunat);
             ps.executeUpdate();
             Venta v = new Venta();
             try (ResultSet keys = ps.getGeneratedKeys()) {
@@ -133,6 +135,7 @@ public class VentaRepository extends BaseRepository {
             v.setTotal(total);
             v.setEstado(estado);
             v.setMetodoPago(metodoPago);
+            v.setCodigoSunat(codigoSunat);
             return v;
         } catch (Exception e) {
             throw new RuntimeException("Error guardando venta: " + e.getMessage());
@@ -208,6 +211,7 @@ public class VentaRepository extends BaseRepository {
         v.setMetodoPago(rs.getString("metodo_pago"));
         v.setIdPreferenciaMp(rs.getString("id_preferencia_mp"));
         v.setIdPagoMp(rs.getString("id_pago_mp"));
+        v.setCodigoSunat(rs.getString("codigo_sunat"));
         Timestamp ts = rs.getTimestamp("fecha_venta");
         if (ts != null) v.setFechaVenta(ts.toLocalDateTime());
         return v;

@@ -6,8 +6,13 @@ import java.util.List;
 
 public class CrearVentaRequest {
 
+    private String codigoSunat;
+
     @NotNull
     private List<ItemVenta> items;
+
+    public String getCodigoSunat() { return codigoSunat; }
+    public void setCodigoSunat(String codigoSunat) { this.codigoSunat = codigoSunat; }
 
     public List<ItemVenta> getItems() { return items; }
     public void setItems(List<ItemVenta> items) { this.items = items; }
